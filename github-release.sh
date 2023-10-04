@@ -128,14 +128,12 @@ Visit the [website](https://hibernate.org/community/) for details on getting in 
 
 if [ "$PUSH_CHANGES" == true ]; then
 set -x
-response=$(curl -L -s -w "\n%{http_code}" -X POST \
+response=$(echo "{\"tag_name\":\"${RELEASE_VERSION}\",\"name\":\"${releaseName}\",\"make_latest\":\"legacy\",\"body\":\"${releaseBody}\"}" | curl -L -s -w "\n%{http_code}" \
+	-X POST 'https://api.github.com/repos/hibernate/hibernate-orm/releases' \
 	-H 'Accept: application/vnd.github+json' \
 	-H 'X-GitHub-Api-Version: 2022-11-28' \
 	-H "Authorization: Bearer $GITHUB_API_TOKEN" \
-	-d @- \
-	'https://api.github.com/repos/hibernate/hibernate-orm/releases' <<EOF
-{\"tag_name\":\"${RELEASE_VERSION}\",\"name\":\"${releaseName}\",\"make_latest\":\"legacy\",\"body\":\"${releaseBody}\"}
-EOF)
+	-d @-)
 	githubCreateReleaseResponseCode=$(tail -n1 <<< "$response")  # get the last line
 	githubCreateReleaseResponse=$(sed '$ d' <<< "$response")   # get all but the last line which contains the status code
 
