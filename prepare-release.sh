@@ -28,8 +28,9 @@ git config --local user.name "Hibernate CI"
 git config --local user.email "ci@hibernate.org"
 
 if [ "$PROJECT" == "orm" ]; then
+	RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 	BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
+	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION_BASIS
 	# set release version
 	# update changelog from JIRA
 	# tags the version
