@@ -68,6 +68,8 @@ date: ${RELEASE_DATE}
 
 summary: bug fixes
 EOF
+git config user.email ci@hibernate.org
+git config user.name Hibernate-CI
 git add $RELEASE_FILE_NAME
 git commit -m "[ORM] ${RELEASE_VERSION}"
 exec_or_dry_run git push origin HEAD:production
