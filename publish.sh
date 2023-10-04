@@ -78,7 +78,7 @@ if [ "$PROJECT" == "orm" ]; then
 		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
-		-DsigningPassword=$SIGNING_PASS -DsigningKeyFile=$SIGNING_KEYRING
+		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 
