@@ -125,6 +125,7 @@ See also the following resources related to supported APIs:
 
 Visit the [website](https://hibernate.org/community/) for details on getting in touch with us."""
 
+set -x
 response=$(exec_or_dry_run curl -L -s -w "\n%{http_code}" -X POST \
 	-H 'Accept: application/vnd.github+json' \
 	-H 'X-GitHub-Api-Version: 2022-11-28' \
