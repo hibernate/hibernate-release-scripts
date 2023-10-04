@@ -125,14 +125,14 @@ See also the following resources related to supported APIs:
 
 Visit the [website](https://hibernate.org/community/) for details on getting in touch with us."""
 
-response=$(exec_or_dry_run curl -L -s -w "\n%{http_code}" -X POST \
+
+if [ "$PUSH_CHANGES" == true ]; then
+response=$(curl -L -s -w "\n%{http_code}" -X POST \
 	-H 'Accept: application/vnd.github+json' \
 	-H 'X-GitHub-Api-Version: 2022-11-28' \
 	-H "Authorization: Bearer \$GITHUB_API_TOKEN" \
 	-d '"{\"tag_name\":\"'${RELEASE_VERSION}'\",\"name\":\"'${releaseName}'\",\"make_latest\":\"legacy\",\"body\":\"'${releaseBody}'\"}"' \
 	'https://api.github.com/repos/hibernate/hibernate-orm/releases')
-
-if [ "$PUSH_CHANGES" == true ]; then
 	githubCreateReleaseResponseCode=$(tail -n1 <<< "$response")  # get the last line
 	githubCreateReleaseResponse=$(sed '$ d' <<< "$response")   # get all but the last line which contains the status code
 
