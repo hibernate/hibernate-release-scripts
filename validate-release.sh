@@ -17,7 +17,7 @@ if [ -z "$RELEASE_VERSION" ]; then
 	exit 1
 fi
 
-git fetch origin $RELEASE_VERSION
+git fetch origin $RELEASE_VERSION || true
 
 if [ `git tag -l | grep $RELEASE_VERSION` ]
 then
