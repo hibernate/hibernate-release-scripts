@@ -75,10 +75,10 @@ RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*
 if [ "$PROJECT" == "orm" ]; then
 	exec_or_dry_run ./gradlew ciRelease closeAndReleaseSonatypeStagingRepository -x test --no-scan \
 		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$RELEASE_VERSION_FAMILY \
-		-PSONATYPE_OSSRH_USER=\$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=\$OSSRH_PASSWORD \
-		-Pgradle.publish.key=\$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=\$PLUGIN_PORTAL_PASSWORD \
-		-PhibernatePublishUsername=\$OSSRH_USER -PhibernatePublishPassword=\$OSSRH_PASSWORD \
-		-DsigningPassword=\$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=\$RELEASE_GPG_PRIVATE_KEY_PATH
+		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
+		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
+		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
+		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 
