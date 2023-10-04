@@ -73,7 +73,7 @@ fi
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
 if [ "$PROJECT" == "orm" ]; then
-	exec_or_dry_run ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test --no-scan \
+	exec_or_dry_run ./gradlew releasePerform closeSonatypeStagingRepository -x test --no-scan \
 		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$RELEASE_VERSION_FAMILY \
 		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
