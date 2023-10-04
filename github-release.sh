@@ -50,7 +50,6 @@ SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
 RELEASE_VERSION=$2
-WORKSPACE=${WORKSPACE:-'.'}
 
 if [ -z "$PROJECT" ]; then
 	echo "ERROR: Project not supplied"

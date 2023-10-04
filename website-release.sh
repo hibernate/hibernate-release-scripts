@@ -50,7 +50,6 @@ SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
 RELEASE_VERSION=$2
-WORKSPACE=${WORKSPACE:-'.'}
 
 if [ -z "$PROJECT" ]; then
 	echo "ERROR: Project not supplied"
@@ -60,8 +59,6 @@ if [ -z "$RELEASE_VERSION" ]; then
 	echo "ERROR: Release version argument not supplied"
 	exit 1
 fi
-
-pushd $WORKSPACE
 
 RELEASE_DATE=$(date +%Y-%m-%d)
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
@@ -74,5 +71,3 @@ EOF
 git add $RELEASE_FILE_NAME
 git commit -m "[ORM] ${RELEASE_VERSION}"
 exec_or_dry_run git push origin HEAD:production
-
-popd
