@@ -12,14 +12,23 @@ if [ -z "$PROJECT" ]; then
 	exit 1
 fi
 
-if [ "$PROJECT" == "ogm" ]; then
-	ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
+if [ "$PROJECT" == "orm" ]; then
+	./gradlew ciRelease closeAndReleaseSonatypeStagingRepository -x test --no-scan \
+	-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$VERSION_FAMILY \
+	-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
+	-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
+	-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
+	-DsigningPassword=$SIGNING_PASS -DsigningKeyFile=$SIGNING_KEYRING
 else
-	ADDITIONAL_OPTIONS=""
+	if [ "$PROJECT" == "ogm" ]; then
+		ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
+	else
+		ADDITIONAL_OPTIONS=""
+	fi
+
+	source "$SCRIPTS_DIR/mvn-setup.sh"
+
+	./mvnw -Pdocbook,documentation-pdf,dist,perf,relocation,release clean deploy -DskipTests=true -Dcheckstyle.skip=true -DperformRelease=true -Dmaven.compiler.useIncrementalCompilation=false $ADDITIONAL_OPTIONS
 fi
-
-source "$SCRIPTS_DIR/mvn-setup.sh"
-
-./mvnw -Pdocbook,documentation-pdf,dist,perf,relocation,release clean deploy -DskipTests=true -Dcheckstyle.skip=true -DperformRelease=true -Dmaven.compiler.useIncrementalCompilation=false $ADDITIONAL_OPTIONS
 
 popd

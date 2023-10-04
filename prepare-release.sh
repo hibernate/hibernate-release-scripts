@@ -5,6 +5,7 @@ SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 PROJECT=$1
 RELEASE_VERSION=$2
 INHERITED_VERSION=$3
+DEVELOPMENT_VERSION=$3
 WORKSPACE=${WORKSPACE:-'.'}
 
 if [ -z "$PROJECT" ]; then
@@ -26,12 +27,27 @@ pushd $WORKSPACE
 git config --local user.name "Hibernate CI"
 git config --local user.email "ci@hibernate.org"
 
-"$SCRIPTS_DIR/check-sourceforge-availability.sh"
-"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
-"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
-"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
-"$SCRIPTS_DIR/update-version.sh" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
-"$SCRIPTS_DIR/create-tag.sh" $PROJECT $RELEASE_VERSION
+if [ "$PROJECT" == "orm" ]; then
+	BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
+	# set release version
+	# update changelog from JIRA
+	# tags the version
+	# changes the version to the provided development version
+	./gradlew clean gitPreparationForRelease -x test --no-scan \
+		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH \
+		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
+		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
+		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
+		-DsigningPassword=$SIGNING_PASS -DsigningKeyFile=$SIGNING_KEYRING
+else
+	"$SCRIPTS_DIR/check-sourceforge-availability.sh"
+	"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
+	"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
+	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
+	"$SCRIPTS_DIR/update-version.sh" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
+	"$SCRIPTS_DIR/create-tag.sh" $PROJECT $RELEASE_VERSION
+fi
 
 popd
 

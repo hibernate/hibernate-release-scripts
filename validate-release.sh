@@ -17,7 +17,7 @@ if [ -z "$RELEASE_VERSION" ]; then
 	exit 1
 fi
 
-git fetch --tags
+git fetch origin $RELEASE_VERSION
 
 if [ `git tag -l | grep $RELEASE_VERSION` ]
 then
@@ -27,24 +27,27 @@ else
 	echo "SUCCESS: tag '$RELEASE_VERSION' does not exist"
 fi
 
-# Only check README updates if it's actually possible that it contains things to update
-if grep -Eq "^\*?Version: .*\*?$|<version>" $README
-then
-	if grep -q "$RELEASE_VERSION" $README
+# ORM does this as part of its prepare Gradle task
+if [ "$PROJECT" != "orm" ]; then
+	# Only check README updates if it's actually possible that it contains things to update
+	if grep -Eq "^\*?Version: .*\*?$|<version>" $README
 	then
-		echo "SUCCESS: $README looks updated"
+		if grep -q "$RELEASE_VERSION" $README
+		then
+			echo "SUCCESS: $README looks updated"
+		else
+			echo "ERROR: $README has not been updated"
+			exit 1
+		fi
+	fi
+
+	if grep -q "$RELEASE_VERSION" $CHANGELOG ;
+	then
+		echo "SUCCESS: $CHANGELOG looks updated"
 	else
-		echo "ERROR: $README has not been updated"
+		echo "ERROR: $CHANGELOG has not been updated"
 		exit 1
 	fi
-fi
-
-if grep -q "$RELEASE_VERSION" $CHANGELOG ;
-then
-	echo "SUCCESS: $CHANGELOG looks updated"
-else
-	echo "ERROR: $CHANGELOG has not been updated"
-	exit 1
 fi
 
 popd

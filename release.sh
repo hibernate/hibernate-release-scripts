@@ -5,9 +5,9 @@ function usage() {
   echo
   echo "  $0 [options] <project> <release_version> <development_version>"
   echo
-  echo "    <project>                One of [search,validator,ogm]"
-  echo "    <release_version>        The version to release (e.g. 6.0.0.Final)"
-  echo "    <development_version>    The new version after the release (e.g. 6.0.1-SNAPSHOT)"
+  echo "    <project>                One of [search,validator,ogm,orm]"
+  echo "    <release_version>        The version to release (e.g. 6.0.1.Final)"
+  echo "    <development_version>    The new version after the release (e.g. 6.0.2-SNAPSHOT)"
   echo
   echo "  Options"
   echo
@@ -98,6 +98,25 @@ else
   echo "Inferred release version family: $RELEASE_VERSION_FAMILY"
 fi
 
+if [ "$PROJECT" == "search" ]; then
+  JIRA_PROJECT="HSEARCH"
+elif [ "$PROJECT" == "validator" ]; then
+  JIRA_PROJECT="HV"
+elif [ "$PROJECT" == "ogm" ]; then
+  JIRA_PROJECT="OGM"
+elif [ "$PROJECT" == "orm" ]; then
+  JIRA_PROJECT="HHH"
+elif [ "$PROJECT" == "reactive" ]; then
+  JIRA_PROJECT="HREACT"
+else
+  echo "ERROR: Unknown project name $PROJECT"
+  usage
+  exit 1
+fi
+
+RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+NEXT_VERSION_BASIS=$(echo "$DEVELOPMENT_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
 #--------------------------------------------
 # Environment variables
 
@@ -161,12 +180,12 @@ if [ -z "$IMPORTED_KEY" ]; then
   exit 1
 fi
 
+if [ "$PUSH_CHANGES" != "true" ]; then
+	ADDITIONAL_OPTIONS="-d"
+fi
+
 bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION"
 
-bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
+#bash -xe "$SCRIPTS_DIR/jira-release.sh" $ADDITIONAL_OPTIONS "$JIRA_PROJECT" "$RELEASE_VERSION_BASIS" "$NEXT_VERSION_BASIS"
 
-exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
-exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
-
-bash -xe "$SCRIPTS_DIR/update-version.sh" "$PROJECT" "$DEVELOPMENT_VERSION"
-bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH_NAME" "$PUSH_CHANGES"
+bash -xe "$SCRIPTS_DIR/publish.sh" $ADDITIONAL_OPTIONS "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION"
