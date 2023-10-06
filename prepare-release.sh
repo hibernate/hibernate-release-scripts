@@ -23,6 +23,9 @@ echo "Preparing the release ..."
 
 pushd $WORKSPACE
 
+git show -s --format=%an
+git show -s --format=%an HEAD~1
+
 # Set up git so that we can create commits
 git config --local user.name "Hibernate CI"
 git config --local user.email "ci@hibernate.org"
