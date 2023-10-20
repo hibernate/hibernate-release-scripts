@@ -24,6 +24,8 @@ function exec_or_dry_run() {
   "${@}"
 }
 PUSH_CHANGES=true
+# Default to a well-known CI environment variable
+BRANCH="$BRANCH_NAME"
 
 while getopts 'dhb:' opt; do
   case "$opt" in
@@ -79,7 +81,7 @@ shift
 # Defaults / computed
 
 if [ -z "$BRANCH" ]; then
-  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  BRANCH="$(git branch --show-current)"
   echo "Inferred release branch: $BRANCH"
 fi
 if (( $# > 0 )); then
@@ -188,4 +190,4 @@ bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION"
 
 #bash -xe "$SCRIPTS_DIR/jira-release.sh" $ADDITIONAL_OPTIONS "$JIRA_PROJECT" "$RELEASE_VERSION_BASIS" "$NEXT_VERSION_BASIS"
 
-bash -xe "$SCRIPTS_DIR/publish.sh" $ADDITIONAL_OPTIONS "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION"
+bash -xe "$SCRIPTS_DIR/publish.sh" $ADDITIONAL_OPTIONS "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION" "$BRANCH"
