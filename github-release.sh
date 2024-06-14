@@ -83,6 +83,13 @@ fi
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
+
+if [ "RELEASE_SUFFIX" == '.Final' ]; then
+  TAG_NAME=$RELEASE_VERSION_BASIS
+else
+  TAG_NAME=$RELEASE_VERSION
+end
 
 if [ "$PUSH_CHANGES" == 'true' ] && [ -z "$GITHUB_API_TOKEN" ]; then
 	echo "ERROR: Environment variable GITHUB_API_TOKEN must not be empty"
@@ -130,7 +137,7 @@ response=$(exec_or_dry_run curl -L -s -w "\n%{http_code}" \
 	-H 'Accept: application/vnd.github+json' \
 	-H 'X-GitHub-Api-Version: 2022-11-28' \
 	-H "Authorization: Bearer $GITHUB_API_TOKEN" \
-	-d "{\"tag_name\":\"${RELEASE_VERSION_BASIS}\",\"name\":\"${releaseName}\",\"make_latest\":\"legacy\",\"body\":\"${releaseBody//$'\n'/\\n}\"}" \
+	-d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"${releaseName}\",\"make_latest\":\"legacy\",\"body\":\"${releaseBody//$'\n'/\\n}\"}" \
 	'https://api.github.com/repos/hibernate/hibernate-orm/releases')
 
 if [ "$PUSH_CHANGES" == true ]; then
