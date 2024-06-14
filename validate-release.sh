@@ -24,7 +24,7 @@ if [ "$RELEASE_SUFFIX" == '.Final' ]; then
   TAG_NAME=$RELEASE_VERSION_BASIS
 else
   TAG_NAME=$RELEASE_VERSION
-end
+fi
 
 git fetch origin $TAG_NAME || true
 
