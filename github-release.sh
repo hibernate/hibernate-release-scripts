@@ -112,7 +112,7 @@ Today, we published a new maintenance release of Hibernate ${PROJECT_NAME} ${REL
 
 This release introduces a few minor improvements as well as bug fixes.
 
-You can find the full list of ${RELEASE_VERSION} changes [here](https://hibernate.atlassian.net/issues/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${RELEASE_VERSION_BASIS}).
+You can find the full list of ${RELEASE_VERSION} changes [here](https://hibernate.atlassian.net/issues/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${TAG_NAME}).
 
 ## Conclusion
 

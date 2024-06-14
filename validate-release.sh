@@ -17,14 +17,23 @@ if [ -z "$RELEASE_VERSION" ]; then
 	exit 1
 fi
 
-git fetch origin $RELEASE_VERSION || true
+RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
 
-if [ `git tag -l | grep $RELEASE_VERSION` ]
+if [ "RELEASE_SUFFIX" == '.Final' ]; then
+  TAG_NAME=$RELEASE_VERSION_BASIS
+else
+  TAG_NAME=$RELEASE_VERSION
+end
+
+git fetch origin $TAG_NAME || true
+
+if [ `git tag -l | grep $TAG_NAME` ]
 then
-	echo "ERROR: tag '$RELEASE_VERSION' already exists, aborting. If you really want to release this version, delete the tag in the workspace first."
+	echo "ERROR: tag '$TAG_NAME' already exists, aborting. If you really want to release this version, delete the tag in the workspace first."
 	exit 1
 else
-	echo "SUCCESS: tag '$RELEASE_VERSION' does not exist"
+	echo "SUCCESS: tag '$TAG_NAME' does not exist"
 fi
 
 # ORM does this as part of its prepare Gradle task
