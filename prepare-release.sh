@@ -18,6 +18,17 @@ if [ -z "$RELEASE_VERSION" ]; then
 else
 	echo "Setting version to '$RELEASE_VERSION'";
 fi
+if [ -z "$DEVELOPMENT_VERSION" ]; then
+	echo "ERROR: Development version argument not supplied"
+	exit 1
+else
+	echo "Setting development version to 'DEVELOPMENT_VERSION'";
+fi
+
+if [ -z "$BRANCH" ]; then
+  BRANCH="$(git branch --show-current)"
+  echo "Inferred release branch: $BRANCH"
+fi
 
 echo "Preparing the release ..."
 
@@ -36,7 +47,7 @@ if [ "$PROJECT" == "orm" ]; then
 	# tags the version
 	# changes the version to the provided development version
 	./gradlew clean releasePrepare -x test --no-scan \
-		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin \
+		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH \
 		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
