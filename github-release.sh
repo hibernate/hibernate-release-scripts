@@ -89,7 +89,7 @@ if [ "$RELEASE_SUFFIX" == '.Final' ]; then
   TAG_NAME=$RELEASE_VERSION_BASIS
 else
   TAG_NAME=$RELEASE_VERSION
-end
+fi
 
 if [ "$PUSH_CHANGES" == 'true' ] && [ -z "$GITHUB_API_TOKEN" ]; then
 	echo "ERROR: Environment variable GITHUB_API_TOKEN must not be empty"
