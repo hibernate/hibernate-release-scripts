@@ -22,7 +22,7 @@ if [ -z "$DEVELOPMENT_VERSION" ]; then
 	echo "ERROR: Development version argument not supplied"
 	exit 1
 else
-	echo "Setting development version to 'DEVELOPMENT_VERSION'";
+	echo "Setting development version to '$DEVELOPMENT_VERSION'";
 fi
 
 if [ -z "$BRANCH" ]; then
