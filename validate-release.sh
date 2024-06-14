@@ -20,7 +20,7 @@ fi
 RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
 
-if [ "RELEASE_SUFFIX" == '.Final' ]; then
+if [ "$RELEASE_SUFFIX" == '.Final' ]; then
   TAG_NAME=$RELEASE_VERSION_BASIS
 else
   TAG_NAME=$RELEASE_VERSION
