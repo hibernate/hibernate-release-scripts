@@ -17,10 +17,26 @@ if [ -z "$RELEASE_VERSION" ]; then
 	exit 1
 fi
 
+if [ "$PROJECT" == "search" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "validator" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "ogm" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "orm" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=".Final"
+elif [ "$PROJECT" == "reactive" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=".Final"
+else
+  echo "ERROR: Unknown project name $PROJECT"
+  exit 1
+fi
+
+
 RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
 
-if [ "$RELEASE_SUFFIX" == '.Final' ]; then
+if [ -n "$STRIPPED_SUFFIX_FOR_TAG" -a "$RELEASE_SUFFIX" == "$STRIPPED_SUFFIX_FOR_TAG" ]; then
   TAG_NAME=$RELEASE_VERSION_BASIS
 else
   TAG_NAME=$RELEASE_VERSION
