@@ -53,28 +53,35 @@ RELEASE_VERSION=$2
 
 if [ -z "$PROJECT" ]; then
 	echo "ERROR: Project not supplied"
+	usage
 	exit 1
 fi
 if [ -z "$RELEASE_VERSION" ]; then
 	echo "ERROR: Release version argument not supplied"
+	usage
 	exit 1
 fi
 
 if [ "$PROJECT" == "search" ]; then
   JIRA_KEY="HSEARCH"
   PROJECT_NAME="Search"
+  STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "validator" ]; then
   JIRA_KEY="HV"
   PROJECT_NAME="Validator"
+  STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "ogm" ]; then
   JIRA_KEY="OGM"
   PROJECT_NAME="OGM"
+  STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "orm" ]; then
   JIRA_KEY="HHH"
   PROJECT_NAME="ORM"
+  STRIPPED_SUFFIX_FOR_TAG=".Final"
 elif [ "$PROJECT" == "reactive" ]; then
   JIRA_KEY="HREACT"
   PROJECT_NAME="Reactive"
+  STRIPPED_SUFFIX_FOR_TAG=".Final"
 else
   echo "ERROR: Unknown project name $PROJECT"
   usage
@@ -85,7 +92,7 @@ RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*
 RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
 
-if [ "$RELEASE_SUFFIX" == '.Final' ]; then
+if [ -n "$STRIPPED_SUFFIX_FOR_TAG" -a "$RELEASE_SUFFIX" == "$STRIPPED_SUFFIX_FOR_TAG" ]; then
   TAG_NAME=$RELEASE_VERSION_BASIS
 else
   TAG_NAME=$RELEASE_VERSION
