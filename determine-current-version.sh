@@ -12,6 +12,9 @@ fi
 
 if [ "$PROJECT" == "orm" ]; then
 	grep hibernateVersion $WORKSPACE/gradle/version.properties|cut -d'=' -f2
+elif [ "$PROJECT" == "reactive" ]; then
+	# For example, if `version.properties` contains `projectVersion=2.4.5-SNAPSHOT`, it returns `2.4.5-SNAPSHOT`
+	grep projectVersion $WORKSPACE/gradle/version.properties|cut -d'=' -f2
 else
 	mvn -f $WORKSPACE/pom.xml org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -q -DforceStdout
 fi

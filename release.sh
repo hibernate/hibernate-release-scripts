@@ -5,7 +5,7 @@ function usage() {
   echo
   echo "  $0 [options] <project> <release_version> <development_version>"
   echo
-  echo "    <project>                One of [search,validator,ogm,orm]"
+  echo "    <project>                One of [search,validator,ogm,orm,reactive]"
   echo "    <release_version>        The version to release (e.g. 6.0.1.Final)"
   echo "    <development_version>    The new version after the release (e.g. 6.0.2-SNAPSHOT)"
   echo
