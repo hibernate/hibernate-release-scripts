@@ -12,8 +12,9 @@ if [ -z "$PROJECT" ]; then
 	exit 1
 fi
 
-if [ "$PROJECT" == "orm" ]; then
-	echo "ERROR: deploy.sh should not be used with ORM, use publish.sh instead"
+PROJECT_NAME=$([ "$PROJECT" == "orm" ] && echo "ORM" || echo "Reactive")
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+	echo "ERROR: deploy.sh should not be used with $PROJECT_NAME, use publish.sh instead"
 	exit 1
 fi
 

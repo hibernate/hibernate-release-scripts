@@ -3,11 +3,12 @@
 function usage() {
   echo "Usage:"
   echo
-  echo "  $0 [options] <project> <release_version> <development_version>"
+  echo "  $0 [options] <project> <release_version> <development_version> <branch>"
   echo
-  echo "    <project>                One of [search,validator,ogm,orm]"
+  echo "    <project>                One of [search,validator,ogm,orm,reactive]"
   echo "    <release_version>        The version to release (e.g. 6.0.1.Final)"
   echo "    <development_version>    The new version after the release (e.g. 6.0.2-SNAPSHOT)"
+  echo "    <branch>                 The branch we want to release"
   echo
   echo "  Options"
   echo
@@ -82,6 +83,19 @@ if [ "$PROJECT" == "orm" ]; then
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH --stacktrace
+
+elif [ "$PROJECT" == "reactive" ]; then
+	git config user.email ci@hibernate.org
+	git config user.name Hibernate-CI
+
+	# Update the project development version and create the tag for the version to be released
+	exec_or_dry_run ./gradlew ciRelease -PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH
+	# Create the artifacts and the documentation
+	exec_or_dry_run ./gradlew assemble
+	# Publish the documentation on hibernate.org (production branch)
+	exec_or_dry_run ./gradlew publishDocumentation -PdocPublishBranch=production
+	# Publish the artifact to OSSRH
+	exec_or_dry_run ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PsontaypeOssrhUser=$OSSRH_USER -PsonatypeOssrgPassword=$OSSRH_PASSWORD
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 
