@@ -18,11 +18,13 @@ if [ -z "$RELEASE_VERSION" ]; then
 else
 	echo "Setting version to '$RELEASE_VERSION'";
 fi
-if [ -z "$DEVELOPMENT_VERSION" ]; then
-	echo "ERROR: Development version argument not supplied"
-	exit 1
-else
-	echo "Setting development version to '$DEVELOPMENT_VERSION'";
+if [ "$PROJECT" == "orm" ]; then
+  if [ -z "$DEVELOPMENT_VERSION" ]; then
+    echo "ERROR: Development version argument not supplied"
+    exit 1
+  else
+    echo "Setting development version to '$DEVELOPMENT_VERSION'";
+  fi
 fi
 
 if [ -z "$BRANCH" ]; then
