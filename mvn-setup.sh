@@ -27,5 +27,5 @@ fi
 
 if ! [ -e "mvnw" ]; then
   # Only necessary in projects that do not have mvnw checked into their git repository.
-  mvn -N io.takari:maven:wrapper -Dmaven=3.5.2
+  mvn -N wrapper:wrapper -Dmaven=3.5.2
 fi
