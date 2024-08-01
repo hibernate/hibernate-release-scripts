@@ -23,7 +23,7 @@ pushd $WORKSPACE
 
 source "$SCRIPTS_DIR/mvn-setup.sh"
 
-if [ -f bom/pom.xml ]; then
+if [ -f bom/pom.xml ] && [ "$PROJECT" == "ogm" ]; then
 	./mvnw -Prelocation clean versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -f bom/pom.xml
 elif [ -z "$VERSION_INHERITED" ]; then
 	./mvnw -Prelocation clean versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
