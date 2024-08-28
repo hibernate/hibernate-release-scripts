@@ -74,31 +74,15 @@ fi
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
-if [ "$PROJECT" == "orm" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	git config user.email ci@hibernate.org
 	git config user.name Hibernate-CI
 	exec_or_dry_run ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test --no-scan --no-daemon \
-		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH \
+		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH -PdocPublishBranch=production \
 		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH --stacktrace
-
-elif [ "$PROJECT" == "reactive" ]; then
-	git config user.email ci@hibernate.org
-	git config user.name Hibernate-CI
-
-	# Update the project development version and create the tag for the version to be released
-	exec_or_dry_run ./gradlew ciRelease -PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH
-	# Create the artifacts and the documentation
-	exec_or_dry_run ./gradlew assemble
-	# We don't publish the documentation for snapshots
-	if [[ $RELEASE_VERSION != *-SNAPSHOT ]]; then
-		# Publish the documentation on hibernate.org (production branch)
-		exec_or_dry_run ./gradlew publishDocumentation -PdocPublishBranch=production
-	fi
-	# Publish the artifact to OSSRH
-	exec_or_dry_run ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PsontaypeOssrhUser=$OSSRH_USER -PsonatypeOssrgPassword=$OSSRH_PASSWORD
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" ]]; then

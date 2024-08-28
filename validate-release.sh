@@ -57,7 +57,7 @@ else
 fi
 
 # ORM does this as part of its prepare Gradle task
-if [ "$PROJECT" != "orm" ]; then
+if [ "$PROJECT" != "orm" ] && [ "$PROJECT" != "reactive" ]; then
 	# Only check README updates if it's actually possible that it contains things to update
 	if grep -Eq "^\*?Version: .*\*?$|<version>" $README
 	then

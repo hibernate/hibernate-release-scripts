@@ -40,7 +40,7 @@ pushd $WORKSPACE
 git config --local user.name "Hibernate CI"
 git config --local user.email "ci@hibernate.org"
 
-if [ "$PROJECT" == "orm" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 	RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
@@ -54,8 +54,7 @@ if [ "$PROJECT" == "orm" ]; then
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
-elif [ "$PROJECT" != "reactive" ]; then
-	# Hibernate Reactive does these checks in the `cirelease` task (called by publish.sh)
+else
 	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" ]]; then
 		# Infra projects do not have a distribution bundle archive,
 		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
