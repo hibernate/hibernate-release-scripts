@@ -92,8 +92,11 @@ elif [ "$PROJECT" == "reactive" ]; then
 	exec_or_dry_run ./gradlew ciRelease -PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH
 	# Create the artifacts and the documentation
 	exec_or_dry_run ./gradlew assemble
-	# Publish the documentation on hibernate.org (production branch)
-	exec_or_dry_run ./gradlew publishDocumentation -PdocPublishBranch=production
+	# We don't publish the documentation for snapshots
+	if [[ $RELEASE_VERSION != *-SNAPSHOT ]]; then
+		# Publish the documentation on hibernate.org (production branch)
+		exec_or_dry_run ./gradlew publishDocumentation -PdocPublishBranch=production
+	fi
 	# Publish the artifact to OSSRH
 	exec_or_dry_run ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PsontaypeOssrhUser=$OSSRH_USER -PsonatypeOssrgPassword=$OSSRH_PASSWORD
 else
