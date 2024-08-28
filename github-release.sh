@@ -103,7 +103,7 @@ if [ "$PUSH_CHANGES" == 'true' ] && [ -z "$GITHUB_API_TOKEN" ]; then
 	exit 1
 fi
 
-docsUrl="https://docs.jboss.org/hibernate/${PROJECT}/${RELEASE_VERSION_FAMILY}"
+docsUrl="https://docs.jboss.org/hibernate/orm/${RELEASE_VERSION_FAMILY}"
 javadocsUrl="${docsUrl}/javadocs"
 migrationGuideUrl="${docsUrl}/migration-guide/migration-guide.html"
 introGuideUrl="${docsUrl}/introduction/html_single/Hibernate_Introduction.html"
@@ -125,7 +125,7 @@ You can find the full list of ${RELEASE_VERSION} changes [here](https://hibernat
 
 For additional details, see:
 
-- the [release page](https://hibernate.org/${PROJECT}/releases/${RELEASE_VERSION_FAMILY}/)
+- the [release page](https://hibernate.org/orm/releases/${RELEASE_VERSION_FAMILY}/)
 - the [Migration Guide](${migrationGuideUrl})
 - the [Introduction Guide](${introGuideUrl})
 - the [User Guide](${userGuideUrl})
