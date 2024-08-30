@@ -54,9 +54,8 @@ if [ "$PROJECT" == "orm" ]; then
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
-elif [ "$PROJECT" == "reactive" ]; then
-	# Hibernate Reactive does these checks in the `cirelease` task (called by publish.sh)
-else
+elif [ "$PROJECT" != "reactive" ]; then
+  # Hibernate Reactive does these checks in the `cirelease` task (called by publish.sh)
 	"$SCRIPTS_DIR/check-sourceforge-availability.sh"
 	"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
 	"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
