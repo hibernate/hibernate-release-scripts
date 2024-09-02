@@ -100,7 +100,7 @@ elif [ "$PROJECT" == "reactive" ]; then
 	# Publish the artifact to OSSRH
 	exec_or_dry_run ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PsontaypeOssrhUser=$OSSRH_USER -PsonatypeOssrgPassword=$OSSRH_PASSWORD
 elif [[ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]]; then
-  exec_or_dry_run ./mvnw release:perform -DperformRelease=true
+  exec_or_dry_run ./mvnw release:perform -DperformRelease=true -Dmaven.resolver.transport=wagon
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 
