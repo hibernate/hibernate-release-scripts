@@ -188,7 +188,7 @@ if [ "$PUSH_CHANGES" != "true" ]; then
 	ADDITIONAL_OPTIONS="-d"
 fi
 
-elif [ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]; then
+if [ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]; then
   # infra projects are using different release plugins than main maven-based projects,
   # and they require both release and development versions:
   bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION"
