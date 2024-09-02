@@ -110,8 +110,6 @@ elif [ "$PROJECT" == "orm" ]; then
   JIRA_PROJECT="HHH"
 elif [ "$PROJECT" == "reactive" ]; then
   JIRA_PROJECT="HREACT"
-elif [[ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]]; then
-  echo 'No JIRA project available'
 else
   echo "ERROR: Unknown project name $PROJECT"
   usage
@@ -188,13 +186,7 @@ if [ "$PUSH_CHANGES" != "true" ]; then
 	ADDITIONAL_OPTIONS="-d"
 fi
 
-if [ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]; then
-  # infra projects are using different release plugins than main maven-based projects,
-  # and they require both release and development versions:
-  bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION"
-else
-  bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION"
-fi
+bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION"
 
 #bash -xe "$SCRIPTS_DIR/jira-release.sh" $ADDITIONAL_OPTIONS "$JIRA_PROJECT" "$RELEASE_VERSION_BASIS" "$NEXT_VERSION_BASIS"
 
