@@ -21,6 +21,10 @@ if [ "$PROJECT" == "search" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "validator" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "infra-theme" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "infra-extensions" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "ogm" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "orm" ]; then
@@ -66,12 +70,15 @@ if [ "$PROJECT" != "orm" ]; then
 		fi
 	fi
 
-	if grep -q "$RELEASE_VERSION" $CHANGELOG ;
-	then
-		echo "SUCCESS: $CHANGELOG looks updated"
-	else
-		echo "ERROR: $CHANGELOG has not been updated"
-		exit 1
+	# Only check the changelog updates if the changelog file actually exists:
+	if [ -f $CHANGELOG ]; then
+		if grep -q "$RELEASE_VERSION" $CHANGELOG ;
+		then
+			echo "SUCCESS: $CHANGELOG looks updated"
+		else
+			echo "ERROR: $CHANGELOG has not been updated"
+			exit 1
+		fi
 	fi
 fi
 
