@@ -101,9 +101,10 @@ elif [ "$PROJECT" == "reactive" ]; then
 	exec_or_dry_run ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository -PsontaypeOssrhUser=$OSSRH_USER -PsonatypeOssrgPassword=$OSSRH_PASSWORD
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
-
-	exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
-	exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
+	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" ]]; then
+		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
+		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
+	fi
 
 	bash -xe "$SCRIPTS_DIR/update-version.sh" "$PROJECT" "$DEVELOPMENT_VERSION"
 	bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"

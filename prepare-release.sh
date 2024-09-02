@@ -55,10 +55,17 @@ if [ "$PROJECT" == "orm" ]; then
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
 elif [ "$PROJECT" != "reactive" ]; then
-  # Hibernate Reactive does these checks in the `cirelease` task (called by publish.sh)
-	"$SCRIPTS_DIR/check-sourceforge-availability.sh"
-	"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
-	"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
+	# Hibernate Reactive does these checks in the `cirelease` task (called by publish.sh)
+	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" ]]; then
+		# Infra projects do not have a distribution bundle archive,
+		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
+		# There is also no versions in the readme and no changelog that we can fetch from JIRA,
+		#    as there is no JIRA for these infra projects,
+		#    hence we only run these steps if it's not an infra project:
+		"$SCRIPTS_DIR/check-sourceforge-availability.sh"
+		"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
+		"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
+	fi
 	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
 	"$SCRIPTS_DIR/update-version.sh" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
 	"$SCRIPTS_DIR/create-tag.sh" $PROJECT $RELEASE_VERSION
