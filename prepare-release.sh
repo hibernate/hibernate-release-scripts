@@ -59,7 +59,8 @@ elif [[ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]]; then
 				-Dtag=$RELEASE_VERSION \
 				-DreleaseVersion=$RELEASE_VERSION \
 				-DdevelopmentVersion=$DEVELOPMENT_VERSION \
-				-DperformRelease=true
+				-DperformRelease=true \
+				-Dmaven.resolver.transport=wagon
 elif [ "$PROJECT" != "reactive" ]; then
 	# Hibernate Reactive does these checks in the `cirelease` task (called by publish.sh)
 	"$SCRIPTS_DIR/check-sourceforge-availability.sh"
