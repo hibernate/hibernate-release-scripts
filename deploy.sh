@@ -19,7 +19,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 fi
 
 if [ "$PROJECT" == "ogm" ]; then
-	ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
+	ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs -s settings-example.xml"
 elif [ "$PROJECT" == "search" ]; then
 	# Disable Develocity build scan publication and build caching
 	ADDITIONAL_OPTIONS="-Dscan=false -Dno-build-cache -Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false"
