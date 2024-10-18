@@ -15,6 +15,11 @@ if [ "$PROJECT" == "orm" ]; then
 elif [ "$PROJECT" == "reactive" ]; then
 	# For example, if `version.properties` contains `projectVersion=2.4.5-SNAPSHOT`, it returns `2.4.5-SNAPSHOT`
 	grep projectVersion $WORKSPACE/gradle/version.properties|cut -d'=' -f2
+elif [ -f './gradlew' ]; then
+	# Gradle-based build
+	grep hibernateVersion $WORKSPACE/gradle/version.properties|cut -d'=' -f2
 else
+	# Maven-based build
+
 	mvn -f $WORKSPACE/pom.xml org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -q -DforceStdout
 fi
