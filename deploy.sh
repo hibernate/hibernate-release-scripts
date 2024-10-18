@@ -18,17 +18,25 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	exit 1
 fi
 
-if [ "$PROJECT" == "ogm" ]; then
-	ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
-elif [ "$PROJECT" == "search" ]; then
-	# Disable Develocity build scan publication and build caching
-	ADDITIONAL_OPTIONS="-Dscan=false -Dno-build-cache -Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false"
+if [ -f "./gradlew" ]; then
+	# Gradle-based build
+
+	./gradlew --no-scan --no-daemon --no-build-cache publish
 else
-	ADDITIONAL_OPTIONS=""
+	# Maven-based build
+
+	if [ "$PROJECT" == "ogm" ]; then
+		ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
+	elif [ "$PROJECT" == "search" ]; then
+		# Disable Develocity build scan publication and build caching
+		ADDITIONAL_OPTIONS="-Dscan=false -Dno-build-cache -Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false"
+	else
+		ADDITIONAL_OPTIONS=""
+	fi
+
+	source "$SCRIPTS_DIR/mvn-setup.sh"
+
+	./mvnw -Pdocbook,documentation-pdf,dist,perf,relocation,release clean deploy -DskipTests=true -Dcheckstyle.skip=true -DperformRelease=true -Dmaven.compiler.useIncrementalCompilation=false $ADDITIONAL_OPTIONS
 fi
-
-source "$SCRIPTS_DIR/mvn-setup.sh"
-
-./mvnw -Pdocbook,documentation-pdf,dist,perf,relocation,release clean deploy -DskipTests=true -Dcheckstyle.skip=true -DperformRelease=true -Dmaven.compiler.useIncrementalCompilation=false $ADDITIONAL_OPTIONS
 
 popd

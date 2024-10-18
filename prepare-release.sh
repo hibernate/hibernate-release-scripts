@@ -55,12 +55,10 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
 else
-	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" ]]; then
-		# Infra projects do not have a distribution bundle archive,
+	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" && "$PROJECT" != "hcann" ]]; then
+		# These projects do not have a distribution bundle archive,
 		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
-		# There is also no versions in the readme and no changelog that we can fetch from JIRA,
-		#    as there is no JIRA for these infra projects,
-		#    hence we only run these steps if it's not an infra project:
+		# There is also no version in the readme and no changelog file.
 		"$SCRIPTS_DIR/check-sourceforge-availability.sh"
 		"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
 		"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
