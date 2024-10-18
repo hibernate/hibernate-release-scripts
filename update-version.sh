@@ -21,16 +21,22 @@ fi
 
 pushd $WORKSPACE
 
-source "$SCRIPTS_DIR/mvn-setup.sh"
-
-if [ -f bom/pom.xml ] && [ "$PROJECT" == "ogm" ]; then
-	./mvnw -Prelocation clean versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -f bom/pom.xml
-elif [ -z "$VERSION_INHERITED" ]; then
-	./mvnw -Prelocation clean versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
+if [ -f "./gradlew" ]; then
+	# Gradle-based build
+	echo "hibernateVersion=$NEW_VERSION" > ./gradle/version.properties
 else
-    # Version inherited from parent
-    ./mvnw -Prelocation versions:update-parent -DparentVersion="[1.0, $NEW_VERSION]" -DgenerateBackupPoms=false -DallowSnapshots=true
-    ./mvnw -Prelocation -N versions:update-child-modules -DgenerateBackupPoms=false
+	# Maven-based build
+	source "$SCRIPTS_DIR/mvn-setup.sh"
+
+	if [ -f bom/pom.xml ] && [ "$PROJECT" == "ogm" ]; then
+		./mvnw -Prelocation clean versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false -f bom/pom.xml
+	elif [ -z "$VERSION_INHERITED" ]; then
+		./mvnw -Prelocation clean versions:set -DnewVersion=$NEW_VERSION -DgenerateBackupPoms=false
+	else
+			# Version inherited from parent
+			./mvnw -Prelocation versions:update-parent -DparentVersion="[1.0, $NEW_VERSION]" -DgenerateBackupPoms=false -DallowSnapshots=true
+			./mvnw -Prelocation -N versions:update-child-modules -DgenerateBackupPoms=false
+	fi
 fi
 
 popd
