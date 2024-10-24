@@ -77,7 +77,7 @@ RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*
 if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	git config user.email ci@hibernate.org
 	git config user.name Hibernate-CI
-	exec_or_dry_run ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test --no-scan --no-daemon \
+	exec_or_dry_run ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test --no-scan --no-daemon --no-build-cache \
 		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH -PdocPublishBranch=production \
 		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
 		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
