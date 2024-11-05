@@ -25,4 +25,5 @@ atlassian-ide-plugin.xml
 *.log
 .clover
 .DS_Store
+.swp
 
