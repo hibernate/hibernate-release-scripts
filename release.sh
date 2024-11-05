@@ -110,7 +110,7 @@ elif [ "$PROJECT" == "orm" ]; then
   JIRA_PROJECT="HHH"
 elif [ "$PROJECT" == "reactive" ]; then
   JIRA_PROJECT="HREACT"
-elif [[ "$PROJECT" == "infra-theme" || "$PROJECT" == "infra-extensions" ]]; then
+elif [[ $PROJECT =~ ^infra-.+ ]]; then
   echo 'No JIRA project available'
 else
   echo "ERROR: Unknown project name $PROJECT"

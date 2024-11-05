@@ -85,7 +85,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH --stacktrace
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
-	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" && "$PROJECT" != "hcann" ]]; then
+	if [[ "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
 	fi
