@@ -55,7 +55,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
 		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH
 else
-	if [[ "$PROJECT" != "infra-theme" && "$PROJECT" != "infra-extensions" && "$PROJECT" != "hcann" ]]; then
+	if [[ "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		# These projects do not have a distribution bundle archive,
 		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
 		# There is also no version in the readme and no changelog file.
