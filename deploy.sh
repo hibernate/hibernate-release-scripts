@@ -38,8 +38,10 @@ else
 		-DperformRelease=true \
 		-DskipTests=true -Dcheckstyle.skip=true \
 		-Dmaven.compiler.useIncrementalCompilation=false \
+		-Ddevelocity.enabled=false \
 		-Dscan=false -Dno-build-cache \
 		-Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false \
+		-Ddevelocity.cache.remote.enabled=false -Ddevelocity.cache.local.enabled=false \
 	 	$ADDITIONAL_OPTIONS
 fi
 
