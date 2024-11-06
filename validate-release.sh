@@ -21,7 +21,7 @@ if [ "$PROJECT" == "search" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "validator" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
-elif [ "$PROJECT" =~ ^infra-.+ ]; then
+elif [[ "$PROJECT" =~ ^infra-.+ ]]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "ogm" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
