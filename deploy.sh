@@ -12,8 +12,8 @@ if [ -z "$PROJECT" ]; then
 	exit 1
 fi
 
-PROJECT_NAME=$([ "$PROJECT" == "orm" ] && echo "ORM" || echo "Reactive")
 if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+  PROJECT_NAME=$([ "$PROJECT" == "orm" ] && echo "ORM" || echo "Reactive")
 	echo "ERROR: deploy.sh should not be used with $PROJECT_NAME, use publish.sh instead"
 	exit 1
 fi
@@ -27,7 +27,7 @@ else
 
 	if [ "$PROJECT" == "ogm" ]; then
 		ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
-	elif [ "$PROJECT" == "search" ]; then
+	elif [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
 		# Disable Develocity build scan publication and build caching
 		ADDITIONAL_OPTIONS="-Dscan=false -Dno-build-cache -Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false"
 	else
