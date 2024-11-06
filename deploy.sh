@@ -27,16 +27,20 @@ else
 
 	if [ "$PROJECT" == "ogm" ]; then
 		ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
-	elif [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
-		# Disable Develocity build scan publication and build caching
-		ADDITIONAL_OPTIONS="-Dscan=false -Dno-build-cache -Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false"
 	else
 		ADDITIONAL_OPTIONS=""
 	fi
 
 	source "$SCRIPTS_DIR/mvn-setup.sh"
 
-	./mvnw -Pdocbook,documentation-pdf,dist,perf,relocation,release clean deploy -DskipTests=true -Dcheckstyle.skip=true -DperformRelease=true -Dmaven.compiler.useIncrementalCompilation=false $ADDITIONAL_OPTIONS
+	./mvnw clean deploy \
+		-Pdocbook,documentation-pdf,dist,perf,relocation,release \
+		-DperformRelease=true \
+		-DskipTests=true -Dcheckstyle.skip=true \
+		-Dmaven.compiler.useIncrementalCompilation=false \
+		-Dscan=false -Dno-build-cache \
+		-Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false \
+	 	$ADDITIONAL_OPTIONS
 fi
 
 popd
