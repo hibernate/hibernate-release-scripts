@@ -1,6 +1,5 @@
 #!/usr/bin/env -S bash -e
 
-
 function usage() {
   echo "Usage:"
   echo
@@ -13,7 +12,10 @@ function usage() {
   echo
   echo "    -h            Show this help and exit."
   echo "    -d            Dry run; do not push, deploy or publish anything."
+  echo "    --notes=file  Specifies an optional file which contains 'release notes' to include in the release announcement"
 }
+
+function needs_arg() { if [ -z "$OPTARG" ]; then die "No arg for --$opt option"; fi; }
 
 #--------------------------------------------
 # Option parsing
@@ -23,7 +25,17 @@ function exec_or_dry_run() {
 }
 PUSH_CHANGES=true
 
-while getopts 'dhb:' opt; do
+notesFile=""
+while getopts 'dhb:-:' opt; do
+  if [ "$opt" = "-" ]; then
+    # long option: reformulate opt and OPTARG
+    #     - extract long option name
+    opt="${OPTARG%%=*}"
+    #     - extract long option argument (may be empty)
+    OPTARG="${OPTARG#"$opt"}"
+    #     - remove assigning `=`
+    OPTARG="${OPTARG#=}"
+  fi
   case "$opt" in
   h)
     usage
@@ -36,6 +48,11 @@ while getopts 'dhb:' opt; do
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
     }
+    ;;
+  notes)
+    needs_arg
+    notesFile="$OPTARG"
+    echo "Using external notes-file : $notesFile"
     ;;
   \?)
     usage
@@ -110,16 +127,24 @@ introGuideUrl="${docsUrl}/introduction/html_single/Hibernate_Introduction.html"
 userGuideUrl="${docsUrl}/userguide/html_single/Hibernate_User_Guide.html"
 					
 releaseName="Hibernate ${PROJECT_NAME} ${RELEASE_VERSION}"
+
+notesContent=""
+if [ -f $notesFile ]; then
+  notesContent=$(cat "$notesFile")
+else
+  notesContent="This release introduces a few minor improvements as well as bug fixes."
+fi
+
 releaseBody="""\
 # Hibernate ${PROJECT_NAME} ${RELEASE_VERSION} released
 
-Today, we published a new maintenance release of Hibernate ${PROJECT_NAME} ${RELEASE_VERSION_FAMILY}: ${RELEASE_VERSION}.
+Today, we published a new release of Hibernate ${PROJECT_NAME} ${RELEASE_VERSION_FAMILY}: ${RELEASE_VERSION}.
+
+You can find the full list of ${RELEASE_VERSION} changes [here](https://hibernate.atlassian.net/issues/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${TAG_NAME}).
 
 ## What's new
 
-This release introduces a few minor improvements as well as bug fixes.
-
-You can find the full list of ${RELEASE_VERSION} changes [here](https://hibernate.atlassian.net/issues/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${TAG_NAME}).
+${notesContent}
 
 ## Conclusion
 
