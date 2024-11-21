@@ -128,10 +128,13 @@ userGuideUrl="${docsUrl}/userguide/html_single/Hibernate_User_Guide.html"
 					
 releaseName="Hibernate ${PROJECT_NAME} ${RELEASE_VERSION}"
 
+# determine the main body of the release notes..
 notesContent=""
-if [ -f $notesFile ]; then
+if [ -n $notesFile && -f $notesFile ]; then
+  # a notes file was passed to the script - read its contents as the main content
   notesContent=$(cat "$notesFile")
 else
+  # use the generic content
   notesContent="This release introduces a few minor improvements as well as bug fixes."
 fi
 
