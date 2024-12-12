@@ -23,6 +23,7 @@ function exec_or_dry_run() {
   "${@}"
 }
 PUSH_CHANGES=true
+DRY_RUN=false
 
 while getopts 'dhb:' opt; do
   case "$opt" in
@@ -33,6 +34,7 @@ while getopts 'dhb:' opt; do
   d)
     # Dry run
     echo "DRY RUN: will not push/deploy/publish anything."
+    DRY_RUN=true
     PUSH_CHANGES=false
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
@@ -77,12 +79,16 @@ RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*
 if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	git config user.email ci@hibernate.org
 	git config user.name Hibernate-CI
-	exec_or_dry_run ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test --no-scan --no-daemon --no-build-cache \
-		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION -PgitRemote=origin -PgitBranch=$BRANCH -PdocPublishBranch=production \
-		-PSONATYPE_OSSRH_USER=$OSSRH_USER -PSONATYPE_OSSRH_PASSWORD=$OSSRH_PASSWORD \
-		-Pgradle.publish.key=$PLUGIN_PORTAL_USERNAME -Pgradle.publish.secret=$PLUGIN_PORTAL_PASSWORD \
-		-PhibernatePublishUsername=$OSSRH_USER -PhibernatePublishPassword=$OSSRH_PASSWORD \
-		-DsigningPassword=$RELEASE_GPG_PASSPHRASE -DsigningKeyFile=$RELEASE_GPG_PRIVATE_KEY_PATH --stacktrace
+
+  EXTRA_ARGS=""
+	if [ "$DRY_RUN" == "true" ]; then
+	  EXTRA_ARGS=" --dry-run"
+	fi
+
+  ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test \
+    --no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
+    -PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
+    -PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
 else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
