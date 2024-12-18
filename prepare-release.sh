@@ -49,8 +49,8 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	# tags the version
 	# changes the version to the provided development version
 	./gradlew clean releasePrepare -x test --no-scan --no-daemon --no-build-cache \
-		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION
-		-PgitRemote=origin
+		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
+		-PgitRemote=origin -PgitBranch=$BRANCH
 else
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		# These projects do not have a distribution bundle archive,
