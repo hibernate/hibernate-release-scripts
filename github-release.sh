@@ -172,7 +172,7 @@ response=$(exec_or_dry_run curl -L -s -w "\n%{http_code}" \
 	-H 'Accept: application/vnd.github+json' \
 	-H 'X-GitHub-Api-Version: 2022-11-28' \
 	-H "Authorization: Bearer $GITHUB_API_TOKEN" \
-	-d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"${releaseName}\",\"make_latest\":\"legacy\",\"body\":\"${releaseBody//$'\n'/\\n}\"}" \
+	-d "{\"tag_name\":\"${TAG_NAME}\",\"name\":\"${releaseName}\",\"make_latest\":\"legacy\",\"body\":$(echo -En "$releaseBody" | jq -Rsaj .)}" \
 	'https://api.github.com/repos/hibernate/hibernate-orm/releases')
 
 if [ "$PUSH_CHANGES" == true ]; then
