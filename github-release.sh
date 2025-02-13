@@ -26,7 +26,7 @@ function exec_or_dry_run() {
 PUSH_CHANGES=true
 
 notesFile=""
-while getopts 'dhb:-:' opt; do
+while getopts 'dh-:' opt; do
   if [ "$opt" = "-" ]; then
     # long option: reformulate opt and OPTARG
     #     - extract long option name
@@ -54,7 +54,7 @@ while getopts 'dhb:-:' opt; do
     notesFile="$OPTARG"
     echo "Using external notes-file : $notesFile"
     ;;
-  \?)
+  *)
     usage
     exit 1
     ;;
@@ -130,7 +130,7 @@ releaseName="Hibernate ${PROJECT_NAME} ${RELEASE_VERSION}"
 
 # determine the main body of the release notes..
 notesContent=""
-if [ -n $notesFile && -f $notesFile ]; then
+if [ -n "$notesFile" -a -f "$notesFile" ]; then
   # a notes file was passed to the script - read its contents as the main content
   notesContent=$(cat "$notesFile")
 else
