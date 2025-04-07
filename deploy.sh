@@ -72,7 +72,7 @@ else
 		# Let's check we've got the right version
 		java -jar jreleaser-cli.jar --version
 		# Execute a JReleaser command such as 'full-release'
-		java -jar jreleaser-cli.jar -Djreleaser.project.version="$RELEASE_VERSION"
+		java -jar jreleaser-cli.jar full-release -Djreleaser.project.version="$RELEASE_VERSION"
 	fi
 fi
 
