@@ -48,9 +48,14 @@ else
 
 	if [ -f "./jreleaser.yml" ]; then
 		# JReleaser-based build
+		EXTRA_JRELEASER_ADDITIONAL_OPTIONS=''
+		if [ "$PUSH_CHANGES" == 'false' ] ; then
+		  EXTRA_JRELEASER_ADDITIONAL_OPTIONS='--dry-run'
+		fi
+		
 		export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
 		curl https://jreleaser.org/setup.sh -sSfL | sh
-		jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
+		jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION" $EXTRA_JRELEASER_ADDITIONAL_OPTIONS
 	fi
 fi
 
