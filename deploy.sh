@@ -1,5 +1,21 @@
 #!/usr/bin/env -S bash -e
 
+EXTRA_JRELEASER_ADDITIONAL_OPTIONS=''
+
+while getopts 'd:' opt; do
+  case "$opt" in
+  d)
+    # Dry run
+    echo "DRY RUN: will not push/deploy/publish anything."
+    EXTRA_JRELEASER_ADDITIONAL_OPTIONS='--dry-run'
+    ;;
+  \?)
+    usage
+    exit 1
+    ;;
+  esac
+done
+
 SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
@@ -48,14 +64,17 @@ else
 
 	if [ -f "./jreleaser.yml" ]; then
 		# JReleaser-based build
-		EXTRA_JRELEASER_ADDITIONAL_OPTIONS=''
-		if [ "$PUSH_CHANGES" == 'false' ] ; then
-		  EXTRA_JRELEASER_ADDITIONAL_OPTIONS='--dry-run'
-		fi
-		
 		export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
-		curl https://jreleaser.org/setup.sh -sSfL | sh
-		jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION" $EXTRA_JRELEASER_ADDITIONAL_OPTIONS
+		# Get the jreleaser downloader
+		curl -sL https://git.io/get-jreleaser > get_jreleaser.java
+		# Download JReleaser with version = <version>
+		# Change <version> to a tagged JReleaser release
+		# or leave it out to pull `latest`.
+		java get_jreleaser.java
+		# Let's check we've got the right version
+		java -jar jreleaser-cli.jar --version
+		# Execute a JReleaser command such as 'full-release'
+		java -jar jreleaser-cli.jar -Djreleaser.project.version="$RELEASE_VERSION" $EXTRA_JRELEASER_ADDITIONAL_OPTIONS
 	fi
 fi
 

@@ -73,6 +73,9 @@ if [ -z "$DEVELOPMENT_VERSION" ]; then
 	echo "ERROR: Development version not supplied"
 	exit 1
 fi
+if [ "$PUSH_CHANGES" != "true" ]; then
+	ADDITIONAL_OPTIONS="-d"
+fi
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
@@ -90,7 +93,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
     -PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
     -PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
 else
-	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
+	bash -xe "$SCRIPTS_DIR/deploy.sh" $ADDITIONAL_OPTIONS "$PROJECT"
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
