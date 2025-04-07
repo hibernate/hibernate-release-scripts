@@ -145,7 +145,7 @@ function gpg_import() {
 	keyId=$(gpg "${@}" --batch --import "$privateKeyPath" 2>&1 | tee >(cat 1>&2) | grep 'key.*: secret key imported' | sed -E 's/.*key ([^:]+):.*/\1/')
 	# output the fingerprint of the imported key
 	gpg "${@}" --list-secret-keys --with-colon "$keyId" | sed -E '2!d;s/.*:([^:]+):$/\1/'
-	export JRELEASER_GPG_KEYNAME=keyId
+	export JRELEASER_GPG_KEYNAME=$keyId
 }
 
 function gpg_delete() {
