@@ -1,13 +1,11 @@
 #!/usr/bin/env -S bash -e
 
-EXTRA_JRELEASER_ADDITIONAL_OPTIONS=''
-
 while getopts 'd:' opt; do
   case "$opt" in
   d)
     # Dry run
     echo "DRY RUN: will not push/deploy/publish anything."
-    EXTRA_JRELEASER_ADDITIONAL_OPTIONS='--dry-run'
+    export JRELEASER_DRY_RUN=true
     ;;
   \?)
     usage
@@ -74,7 +72,7 @@ else
 		# Let's check we've got the right version
 		java -jar jreleaser-cli.jar --version
 		# Execute a JReleaser command such as 'full-release'
-		java -jar jreleaser-cli.jar -Djreleaser.project.version="$RELEASE_VERSION" $EXTRA_JRELEASER_ADDITIONAL_OPTIONS
+		java -jar jreleaser-cli.jar -Djreleaser.project.version="$RELEASE_VERSION"
 	fi
 fi
 
