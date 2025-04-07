@@ -145,13 +145,18 @@ function gpg_import() {
 	keyId=$(gpg "${@}" --batch --import "$privateKeyPath" 2>&1 | tee >(cat 1>&2) | grep 'key.*: secret key imported' | sed -E 's/.*key ([^:]+):.*/\1/')
 	# output the fingerprint of the imported key
 	gpg "${@}" --list-secret-keys --with-colon "$keyId" | sed -E '2!d;s/.*:([^:]+):$/\1/'
-	export JRELEASER_GPG_KEYNAME=$keyId
 }
 
 function gpg_delete() {
 	local fingerprint="$1"
 	shift
 	gpg "${@}" --batch --yes --delete-secret-keys "$fingerprint"
+}
+
+function gpg_delete_public() {
+	local fingerprint="$1"
+	shift
+	gpg "${@}" --batch --yes --delete-keys "$fingerprint"
 }
 
 #--------------------------------------------
@@ -161,6 +166,10 @@ function cleanup() {
   if [ -n "$IMPORTED_KEY" ]; then
     echo "Deleting imported GPG private key..."
     gpg_delete "$IMPORTED_KEY" || true
+  fi
+  if [ -n "$IMPORTED_PUBLIC_KEY" ]; then
+    echo "Deleting imported GPG public key..."
+    gpg_delete_public "$IMPORTED_PUBLIC_KEY" || true
   fi
   if [ -d "$RELEASE_GPG_HOMEDIR" ]; then
     echo "Cleaning up GPG homedir..."
@@ -186,6 +195,7 @@ if [ -z "$IMPORTED_KEY" ]; then
   echo "Failed to import GPG key"
   exit 1
 fi
+IMPORTED_PUBLIC_KEY="$(gpg_import "$RELEASE_GPG_PUBLIC_KEY_PATH")"
 
 if [ "$PUSH_CHANGES" != "true" ]; then
 	ADDITIONAL_OPTIONS="-d"
