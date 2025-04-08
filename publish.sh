@@ -73,13 +73,10 @@ if [ -z "$DEVELOPMENT_VERSION" ]; then
 	echo "ERROR: Development version not supplied"
 	exit 1
 fi
-if [ "$PUSH_CHANGES" != "true" ]; then
-	ADDITIONAL_OPTIONS="-d"
-fi
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
-if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
 	git config user.email ci@hibernate.org
 	git config user.name Hibernate-CI
 
@@ -88,12 +85,21 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
 	  EXTRA_ARGS=" --dry-run"
 	fi
 
-  ./gradlew releasePerform closeAndReleaseSonatypeStagingRepository -x test \
-    --no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
-    -PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
-    -PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
+	if [ -f "./jreleaser.yml" ]; then
+		# JReleaser-based build
+		source "$SCRIPTS_DIR/jreleaser-setup.sh"
+		# Execute a JReleaser command such as 'full-release'
+		./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
+	else
+	 EXTRA_ARGS+=" closeAndReleaseSonatypeStagingRepository"
+	fi
+
+	./gradlew releasePerform -x test \
+  				--no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
+  				-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
+  				-PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
 else
-	bash -xe "$SCRIPTS_DIR/deploy.sh" $ADDITIONAL_OPTIONS "$PROJECT"
+	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
