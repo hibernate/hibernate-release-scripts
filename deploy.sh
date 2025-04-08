@@ -1,19 +1,5 @@
 #!/usr/bin/env -S bash -e
 
-while getopts 'd:' opt; do
-  case "$opt" in
-  d)
-    # Dry run
-    echo "DRY RUN: will not push/deploy/publish anything."
-    export JRELEASER_DRY_RUN=true
-    ;;
-  \?)
-    usage
-    exit 1
-    ;;
-  esac
-done
-
 SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
@@ -62,17 +48,9 @@ else
 
 	if [ -f "./jreleaser.yml" ]; then
 		# JReleaser-based build
-		export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
-		# Get the jreleaser downloader
-		curl -sL https://git.io/get-jreleaser > get_jreleaser.java
-		# Download JReleaser with version = <version>
-		# Change <version> to a tagged JReleaser release
-		# or leave it out to pull `latest`.
-		java get_jreleaser.java
-		# Let's check we've got the right version
-		java -jar jreleaser-cli.jar --version
+		source "$SCRIPTS_DIR/jreleaser-setup.sh"
 		# Execute a JReleaser command such as 'full-release'
-		java -jar jreleaser-cli.jar full-release -Djreleaser.project.version="$RELEASE_VERSION"
+		./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
 	fi
 fi
 

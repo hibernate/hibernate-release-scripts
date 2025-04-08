@@ -40,6 +40,7 @@ while getopts 'dhb:' opt; do
     # Dry run
     echo "DRY RUN: will not push/deploy/publish anything."
     PUSH_CHANGES=false
+    export JRELEASER_DRY_RUN=true
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
     }
@@ -112,6 +113,8 @@ elif [ "$PROJECT" == "reactive" ]; then
   JIRA_PROJECT="HREACT"
 elif [ "$PROJECT" == "tools" ]; then
   JIRA_PROJECT="HBX"
+elif [ "$PROJECT" == "models" ]; then
+  echo 'No JIRA project available'
 elif [[ $PROJECT =~ ^infra-.+ ]]; then
   echo 'No JIRA project available'
 else
@@ -145,7 +148,6 @@ function gpg_import() {
 	keyId=$(gpg "${@}" --batch --import "$privateKeyPath" 2>&1 | tee >(cat 1>&2) | grep 'key.*: secret key imported' | sed -E 's/.*key ([^:]+):.*/\1/')
 	# output the fingerprint of the imported key
 	gpg "${@}" --list-secret-keys --with-colon "$keyId" | sed -E '2!d;s/.*:([^:]+):$/\1/'
-	export JRELEASER_GPG_KEYNAME=$keyId
 }
 
 function gpg_delete() {
@@ -181,6 +183,7 @@ if [ -e "$RELEASE_GPG_HOMEDIR" ]; then
 fi
 mkdir -p -m 700 "$RELEASE_GPG_HOMEDIR"
 export GNUPGHOME="$RELEASE_GPG_HOMEDIR"
+export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
 IMPORTED_KEY="$(gpg_import "$RELEASE_GPG_PRIVATE_KEY_PATH")"
 if [ -z "$IMPORTED_KEY" ]; then
   echo "Failed to import GPG key"

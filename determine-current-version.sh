@@ -15,6 +15,8 @@ if [ "$PROJECT" == "orm" ]; then
 elif [ "$PROJECT" == "reactive" ]; then
 	# For example, if `version.properties` contains `projectVersion=2.4.5-SNAPSHOT`, it returns `2.4.5-SNAPSHOT`
 	grep projectVersion $WORKSPACE/gradle/version.properties|cut -d'=' -f2
+elif [ "$PROJECT" == "models" ]; then
+	cat $WORKSPACE/version.txt
 elif [ -f './gradlew' ]; then
 	# Gradle-based build
 	grep hibernateVersion $WORKSPACE/gradle/version.properties|cut -d'=' -f2
