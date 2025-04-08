@@ -194,7 +194,7 @@ if [ "$PUSH_CHANGES" != "true" ]; then
 	ADDITIONAL_OPTIONS="-d"
 fi
 
-bash -xe "$SCRIPTS_DIR/prepare-release.sh" "$PROJECT" "$RELEASE_VERSION"
+bash -xe "$SCRIPTS_DIR/prepare-release.sh" -b "$BRANCH" -d "$DEVELOPMENT_VERSION" "$PROJECT" "$RELEASE_VERSION"
 
 #bash -xe "$SCRIPTS_DIR/jira-release.sh" $ADDITIONAL_OPTIONS "$JIRA_PROJECT" "$RELEASE_VERSION_BASIS" "$NEXT_VERSION_BASIS"
 
