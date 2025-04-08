@@ -1,11 +1,32 @@
 #!/usr/bin/env -S bash -e
 
+# Default to a well-known CI environment variable
+BRANCH="$BRANCH_NAME"
+
+while getopts 'd:b:' opt; do
+  case "$opt" in
+  b)
+    BRANCH="$OPTARG"
+    ;;
+  d)
+    DEVELOPMENT_VERSION="$OPTARG"
+    ;;
+  \?)
+    usage
+    exit 1
+    ;;
+  esac
+done
+shift $((OPTIND - 1))
+
 SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
 RELEASE_VERSION=$2
 INHERITED_VERSION=$3
-DEVELOPMENT_VERSION=$3
+if [ -n "$3" ]; then
+  DEVELOPMENT_VERSION=$3
+fi
 WORKSPACE=${WORKSPACE:-'.'}
 
 if [ -z "$PROJECT" ]; then
