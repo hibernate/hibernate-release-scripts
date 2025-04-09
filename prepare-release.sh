@@ -65,14 +65,19 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 	RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 	RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
+
+	EXTRA_ARGS=""
+	if [ -f "./jreleaser.yml" ]; then
+		EXTRA_ARGS+=" publish"
+	fi
+
 	# set release version
 	# update changelog from JIRA
 	# tags the version
 	# changes the version to the provided development version
-	./gradlew clean releasePrepare pTML -x test --no-scan --no-daemon --no-build-cache \
+	./gradlew clean releasePrepare -x test --no-scan --no-daemon --no-build-cache \
 		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
-		-PgitRemote=origin -PgitBranch=$BRANCH \
-		-Dmaven.repo.local=$(pwd)/build/staging-deploy/maven
+		-PgitRemote=origin -PgitBranch=$BRANCH $EXTRA_ARGS
 else
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		# These projects do not have a distribution bundle archive,
