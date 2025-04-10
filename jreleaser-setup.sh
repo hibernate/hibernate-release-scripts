@@ -5,13 +5,14 @@
 #     source "$SCRIPTS_DIR/jreleaser-setup.sh"
 
 if [ -d "jreleaser" ]; then
-  echo "JReleaser was already set up."
+  echo "JReleaser was already set up. Skipping installation"
   ./jreleaser/bin/jreleaser --version
   return
 fi
 
+echo "About to install JReleaser."
 wget https://github.com/jreleaser/jreleaser/releases/download/v1.17.0/jreleaser-1.17.0.zip -qO jreleaser.zip
-unzip jreleaser.zip
+unzip -qq jreleaser.zip
 mv jreleaser-1.17.0 jreleaser
 rm jreleaser.zip
 
