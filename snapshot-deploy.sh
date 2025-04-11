@@ -34,4 +34,4 @@ else
 fi
 
 # Execute a JReleaser command such as 'full-release'
-./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$VERSION"
+$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$VERSION"

@@ -51,7 +51,7 @@ if [ -f "./jreleaser.yml" ]; then
 	# JReleaser-based build
 	source "$SCRIPTS_DIR/jreleaser-setup.sh"
 	# Execute a JReleaser command such as 'full-release'
-	./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
+	$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
 fi
 
 popd

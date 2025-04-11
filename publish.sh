@@ -77,10 +77,6 @@ fi
 #--------------------------------------------
 # Environment variables
 
-if [ -z "$RELEASE_GPG_HOMEDIR" ]; then
-  echo "ERROR: environment variable RELEASE_GPG_HOMEDIR is not set"
-  exit 1
-fi
 if [ -z "$RELEASE_GPG_PRIVATE_KEY_PATH" ]; then
   echo "ERROR: environment variable RELEASE_GPG_PRIVATE_KEY_PATH is not set"
   exit 1
@@ -125,15 +121,20 @@ trap "cleanup" EXIT
 #--------------------------------------------
 # Actual script
 
-mkdir -p -m 700 "$RELEASE_GPG_HOMEDIR"
+# keep the RELEASE_GPG_HOMEDIR just for the sake of the old release jobs,
+# if those relied on this env variable:
+export RELEASE_GPG_HOMEDIR="$SCRIPTS_DIR/.gpg"
+#we probably can remove the following env variable once all releases are using JReleaser:
 export GNUPGHOME="$RELEASE_GPG_HOMEDIR"
+# this env variable is used by JReleaser to find the keys to sing things:
 export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
+
+mkdir -p -m 700 "$RELEASE_GPG_HOMEDIR"
 IMPORTED_KEY="$(gpg_import "$RELEASE_GPG_PRIVATE_KEY_PATH")"
 if [ -z "$IMPORTED_KEY" ]; then
   echo "Failed to import GPG key"
   exit 1
 fi
-
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
@@ -150,7 +151,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 		# JReleaser-based build
 		source "$SCRIPTS_DIR/jreleaser-setup.sh"
 		# Execute a JReleaser command such as 'full-release'
-		./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
+		$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
 	else
 	 EXTRA_ARGS+=" closeAndReleaseSonatypeStagingRepository"
 	fi

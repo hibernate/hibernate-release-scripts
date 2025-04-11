@@ -1,0 +1,3 @@
+# The folder into which we install jreleaser into
+*
+!.gitignore

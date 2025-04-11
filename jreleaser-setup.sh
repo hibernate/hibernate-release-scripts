@@ -4,16 +4,18 @@
 #     SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 #     source "$SCRIPTS_DIR/jreleaser-setup.sh"
 
-if [ -d "jreleaser" ]; then
+SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
+
+if [ -d "${SCRIPTS_DIR}/jreleaser/bin/jreleaser" ]; then
   echo "JReleaser was already set up. Skipping installation"
-  ./jreleaser/bin/jreleaser --version
+  $SCRIPTS_DIR/jreleaser/bin/jreleaser --version
   return
 fi
 
 echo "About to install JReleaser."
 wget https://github.com/jreleaser/jreleaser/releases/download/v1.17.0/jreleaser-1.17.0.zip -qO jreleaser.zip
 unzip -qq jreleaser.zip
-mv jreleaser-1.17.0 jreleaser
+mv jreleaser-1.17.0/* $SCRIPTS_DIR/jreleaser
 rm jreleaser.zip
 
-./jreleaser/bin/jreleaser --version
+$SCRIPTS_DIR/jreleaser/bin/jreleaser --version
