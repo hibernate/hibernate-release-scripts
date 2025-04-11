@@ -74,6 +74,67 @@ if [ -z "$DEVELOPMENT_VERSION" ]; then
 	exit 1
 fi
 
+#--------------------------------------------
+# Environment variables
+
+if [ -z "$RELEASE_GPG_HOMEDIR" ]; then
+  echo "ERROR: environment variable RELEASE_GPG_HOMEDIR is not set"
+  exit 1
+fi
+if [ -z "$RELEASE_GPG_PRIVATE_KEY_PATH" ]; then
+  echo "ERROR: environment variable RELEASE_GPG_PRIVATE_KEY_PATH is not set"
+  exit 1
+fi
+
+#--------------------------------------------
+# GPG
+
+function gpg_import() {
+	local privateKeyPath="$1"
+	shift
+	local keyId
+	keyId=$(gpg "${@}" --batch --import "$privateKeyPath" 2>&1 | tee >(cat 1>&2) | grep 'key.*: secret key imported' | sed -E 's/.*key ([^:]+):.*/\1/')
+	# output the fingerprint of the imported key
+	gpg "${@}" --list-secret-keys --with-colon "$keyId" | sed -E '2!d;s/.*:([^:]+):$/\1/'
+}
+
+function gpg_delete() {
+	local fingerprint="$1"
+	shift
+	gpg "${@}" --batch --yes --delete-secret-keys "$fingerprint"
+}
+
+#--------------------------------------------
+# Cleanup on exit
+
+function cleanup() {
+  if [ -n "$IMPORTED_KEY" ]; then
+    echo "Deleting imported GPG private key..."
+    gpg_delete "$IMPORTED_KEY" || true
+  fi
+  if [ -d "$RELEASE_GPG_HOMEDIR" ]; then
+    echo "Cleaning up GPG homedir..."
+    rm -rf "$RELEASE_GPG_HOMEDIR" || true
+    echo "Clearing GPG agent..."
+    gpg-connect-agent reloadagent /bye || true
+  fi
+}
+
+trap "cleanup" EXIT
+
+#--------------------------------------------
+# Actual script
+
+mkdir -p -m 700 "$RELEASE_GPG_HOMEDIR"
+export GNUPGHOME="$RELEASE_GPG_HOMEDIR"
+export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
+IMPORTED_KEY="$(gpg_import "$RELEASE_GPG_PRIVATE_KEY_PATH")"
+if [ -z "$IMPORTED_KEY" ]; then
+  echo "Failed to import GPG key"
+  exit 1
+fi
+
+
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
 if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
