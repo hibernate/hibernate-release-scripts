@@ -45,13 +45,13 @@ else
 		-Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false \
 		-Ddevelocity.cache.remote.enabled=false -Ddevelocity.cache.local.enabled=false \
 	 	$ADDITIONAL_OPTIONS
+fi
 
-	if [ -f "./jreleaser.yml" ]; then
-		# JReleaser-based build
-		source "$SCRIPTS_DIR/jreleaser-setup.sh"
-		# Execute a JReleaser command such as 'full-release'
-		./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
-	fi
+if [ -f "./jreleaser.yml" ]; then
+	# JReleaser-based build
+	source "$SCRIPTS_DIR/jreleaser-setup.sh"
+	# Execute a JReleaser command such as 'full-release'
+	./jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
 fi
 
 popd
