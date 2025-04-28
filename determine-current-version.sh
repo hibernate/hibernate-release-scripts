@@ -23,5 +23,5 @@ elif [ -f './gradlew' ]; then
 else
 	# Maven-based build
 
-	mvn -f $WORKSPACE/pom.xml org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version -q -DforceStdout
+	mvn -f $WORKSPACE/pom.xml org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -q -DforceStdout
 fi
