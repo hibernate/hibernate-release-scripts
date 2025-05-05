@@ -68,7 +68,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 
 	EXTRA_ARGS=""
 	if [ -f "./jreleaser.yml" ]; then
-		EXTRA_ARGS+=" publish"
+		EXTRA_ARGS+=" publishAllPublicationsToStagingRepository"
 	fi
 
 	# set release version
