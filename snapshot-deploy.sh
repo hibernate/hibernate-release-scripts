@@ -21,17 +21,12 @@ if ! [[ $VERSION =~ ^.+-SNAPSHOT$ ]]; then
 	exit 1
 fi
 
-source "$SCRIPTS_DIR/jreleaser-setup.sh"
-
 if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "tools" ] || [[ $PROJECT =~ ^infra-.+ ]]; then
   ./mvnw -Pci-build -DskipTests clean deploy
 elif [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
-  ./gradlew clean publish -x test --no-scan --no-daemon --no-build-cache --stacktrace
+  ./gradlew clean publishAllPublicationsToSnapshotsRepository -x test --no-scan --no-daemon --no-build-cache --stacktrace
 else
   echo "ERROR: Unknown project name $PROJECT"
   usage
   exit 1
 fi
-
-# Execute a JReleaser command such as 'full-release'
-$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$VERSION"
