@@ -3,12 +3,18 @@
 # Default to a well-known CI environment variable
 BRANCH="$BRANCH_NAME"
 
-while getopts 'd:b:' opt; do
+while getopts 'djv:b:' opt; do
   case "$opt" in
+  d)
+    DRY_RUN=true
+    ;;
+  j)
+    USE_JRELEASER_RELEASE=true
+    ;;
   b)
     BRANCH="$OPTARG"
     ;;
-  d)
+  v)
     DEVELOPMENT_VERSION="$OPTARG"
     ;;
   \?)
@@ -67,7 +73,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
 
 	EXTRA_ARGS=""
-	if [ -f "./jreleaser.yml" ]; then
+	if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
 		EXTRA_ARGS+=" publishAllPublicationsToStagingRepository"
 	fi
 
