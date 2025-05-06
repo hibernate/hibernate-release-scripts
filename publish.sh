@@ -24,18 +24,23 @@ function exec_or_dry_run() {
 }
 PUSH_CHANGES=true
 DRY_RUN=false
+USE_JRELEASER_RELEASE=false
 
-while getopts 'dhb:' opt; do
+while getopts 'djh:' opt; do
   case "$opt" in
   h)
     usage
     exit 0
+    ;;
+  j)
+    USE_JRELEASER_RELEASE=true
     ;;
   d)
     # Dry run
     echo "DRY RUN: will not push/deploy/publish anything."
     DRY_RUN=true
     PUSH_CHANGES=false
+    export JRELEASER_DRY_RUN=true
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
     }
@@ -119,6 +124,23 @@ function cleanup() {
 trap "cleanup" EXIT
 
 #--------------------------------------------
+
+function runJReleaser() {
+	if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
+		# JReleaser-based build
+		source "$SCRIPTS_DIR/jreleaser-setup.sh"
+		# Execute a JReleaser command such as 'full-release'
+		$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release \
+				-Djreleaser.project.version="$RELEASE_VERSION" \
+				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
+				--config-file $($SCRIPTS_DIR/determine-jreleaser-config-file.sh $PROJECT) \
+				--basedir $(realpath $WORKSPACE)
+	fi
+}
+
+#--------------------------------------------
+
+#--------------------------------------------
 # Actual script
 
 # keep the RELEASE_GPG_HOMEDIR just for the sake of the old release jobs,
@@ -132,8 +154,8 @@ export JRELEASER_GPG_HOMEDIR="$RELEASE_GPG_HOMEDIR"
 mkdir -p -m 700 "$RELEASE_GPG_HOMEDIR"
 IMPORTED_KEY="$(gpg_import "$RELEASE_GPG_PRIVATE_KEY_PATH")"
 if [ -z "$IMPORTED_KEY" ]; then
-  echo "Failed to import GPG key"
-  exit 1
+	echo "Failed to import GPG key"
+	exit 1
 fi
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
@@ -142,26 +164,28 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 	git config user.email ci@hibernate.org
 	git config user.name Hibernate-CI
 
-  EXTRA_ARGS=""
+	EXTRA_ARGS=""
 	if [ "$DRY_RUN" == "true" ]; then
-	  EXTRA_ARGS=" --dry-run"
+		EXTRA_ARGS=" --dry-run"
 	fi
 
-	if [ -f "./jreleaser.yml" ]; then
-		# JReleaser-based build
-		source "$SCRIPTS_DIR/jreleaser-setup.sh"
-		# Execute a JReleaser command such as 'full-release'
-		$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
-	else
+	if [ ! -f "./jreleaser.yml" ] && [ "$USE_JRELEASER_RELEASE" == "false" ]; then
 	 EXTRA_ARGS+=" closeAndReleaseSonatypeStagingRepository"
 	fi
+	runJReleaser
 
 	./gradlew releasePerform -x test \
-  				--no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
-  				-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
-  				-PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
+					--no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
+					-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
+					-PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
 else
-	bash -xe "$SCRIPTS_DIR/deploy.sh" "$PROJECT"
+	EXTRA_ARGS=""
+	if [ "$USE_JRELEASER_RELEASE" == "true" ]; then
+		EXTRA_ARGS=" -j"
+	fi
+	bash -xe "$SCRIPTS_DIR/deploy.sh" "$EXTRA_ARGS" "$PROJECT"
+	runJReleaser
+
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"

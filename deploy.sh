@@ -1,5 +1,21 @@
 #!/usr/bin/env -S bash -e
 
+USE_JRELEASER_RELEASE=false
+
+while getopts 'j:' opt; do
+  case "$opt" in
+  j)
+    USE_JRELEASER_RELEASE=true
+    ;;
+  \?)
+    usage
+    exit 1
+    ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
 SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
@@ -47,11 +63,15 @@ else
 	 	$ADDITIONAL_OPTIONS
 fi
 
-if [ -f "./jreleaser.yml" ]; then
+if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
 	# JReleaser-based build
 	source "$SCRIPTS_DIR/jreleaser-setup.sh"
 	# Execute a JReleaser command such as 'full-release'
-	$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release -Djreleaser.project.version="$RELEASE_VERSION"
+  $SCRIPTS_DIR/jreleaser/bin/jreleaser full-release \
+      -Djreleaser.project.version="$RELEASE_VERSION" \
+      -Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
+      --config-file $($SCRIPTS_DIR/determine-jreleaser-config-file.sh $PROJECT) \
+      --basedir $WORKSPACE
 fi
 
 popd

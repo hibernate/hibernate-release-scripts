@@ -27,7 +27,7 @@ PUSH_CHANGES=true
 # Default to a well-known CI environment variable
 BRANCH="$BRANCH_NAME"
 
-while getopts 'dhb:' opt; do
+while getopts 'djhb:' opt; do
   case "$opt" in
   b)
     BRANCH="$OPTARG"
@@ -35,6 +35,9 @@ while getopts 'dhb:' opt; do
   h)
     usage
     exit 0
+    ;;
+  j)
+    USE_JRELEASER_RELEASE=true
     ;;
   d)
     # Dry run
@@ -130,7 +133,11 @@ if [ "$PUSH_CHANGES" != "true" ]; then
 	ADDITIONAL_OPTIONS="-d"
 fi
 
-bash -xe "$SCRIPTS_DIR/prepare-release.sh" -b "$BRANCH" -d "$DEVELOPMENT_VERSION" "$PROJECT" "$RELEASE_VERSION"
+if [ "$USE_JRELEASER_RELEASE" == "true" ]; then
+	ADDITIONAL_OPTIONS="${ADDITIONAL_OPTIONS} -j"
+fi
+
+bash -xe "$SCRIPTS_DIR/prepare-release.sh" $ADDITIONAL_OPTIONS -b "$BRANCH" -v "$DEVELOPMENT_VERSION" "$PROJECT" "$RELEASE_VERSION"
 
 #bash -xe "$SCRIPTS_DIR/jira-release.sh" $ADDITIONAL_OPTIONS "$JIRA_PROJECT" "$RELEASE_VERSION_BASIS" "$NEXT_VERSION_BASIS"
 
