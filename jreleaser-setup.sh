@@ -13,10 +13,10 @@ if [ -f "${SCRIPTS_DIR}/jreleaser/bin/jreleaser" ]; then
 fi
 
 echo "About to install JReleaser."
-wget https://github.com/jreleaser/jreleaser/releases/download/v1.17.0/jreleaser-1.17.0.zip -qO jreleaser.zip
+wget https://github.com/jreleaser/jreleaser/releases/download/v1.18.0/jreleaser-1.18.0.zip -qO jreleaser.zip
 unzip -qq jreleaser.zip
-mv jreleaser-1.17.0/* $SCRIPTS_DIR/jreleaser
-rm -r jreleaser-1.17.0
+mv jreleaser-1.18.0/* $SCRIPTS_DIR/jreleaser
+rm -r jreleaser-1.18.0
 rm jreleaser.zip
 
 $SCRIPTS_DIR/jreleaser/bin/jreleaser --version
