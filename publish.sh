@@ -129,11 +129,39 @@ function runJReleaser() {
 	if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
 		# JReleaser-based build
 		source "$SCRIPTS_DIR/jreleaser-setup.sh"
+
+		echo "Start determining JReleaser config file..."
+		if [ -f "./jreleaser.yml" ]; then
+			# There is a jreleaser.yml in the project root. Using this configuration:
+			CONFIG_FILE="./jreleaser.yml"
+		else
+			echo "Start determining current branch..."
+			BRANCH_NAME=$(git symbolic-ref -q HEAD)
+			BRANCH_NAME=${BRANCH_NAME##refs/heads/}
+			BRANCH_NAME=${BRANCH_NAME:-HEAD}
+
+			echo "Current branch is: $BRANCH_NAME"
+
+			if [ "$PROJECT" == "orm" ]; then
+				if [ "$BRANCH_NAME" == "main" ]; then
+					CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_manual.yml"
+				else
+					CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_automatic.yml"
+				fi
+			elif [ "$PROJECT" == "reactive" ]; then
+				CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_automatic_alternative.yml"
+			elif [ "$PROJECT" == "models" ]; then
+				CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_automatic_alternative.yml"
+			else
+				CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_manual.yml"
+			fi
+		fi
+
 		# Execute a JReleaser command such as 'full-release'
 		$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
-				--config-file $($SCRIPTS_DIR/determine-jreleaser-config-file.sh $PROJECT) \
+				--config-file $CONFIG_FILE \
 				--basedir $(realpath $WORKSPACE)
 	fi
 }
