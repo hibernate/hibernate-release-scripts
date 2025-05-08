@@ -135,11 +135,7 @@ function runJReleaser() {
 			# There is a jreleaser.yml in the project root. Using this configuration:
 			CONFIG_FILE="./jreleaser.yml"
 		else
-			echo "Start determining current branch..."
-			BRANCH_NAME=$(git symbolic-ref -q HEAD)
-			BRANCH_NAME=${BRANCH_NAME##refs/heads/}
-			BRANCH_NAME=${BRANCH_NAME:-HEAD}
-
+			BRANCH_NAME=$BRANCH
 			echo "Current branch is: $BRANCH_NAME"
 
 			if [ "$PROJECT" == "orm" ]; then
