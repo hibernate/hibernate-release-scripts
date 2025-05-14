@@ -65,8 +65,6 @@ RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*
 RELEASE_FILE_NAME="./_data/projects/${PROJECT}/releases/${RELEASE_VERSION_FAMILY}/${RELEASE_VERSION}.yml"
 cat >> $RELEASE_FILE_NAME <<EOF
 date: ${RELEASE_DATE}
-
-summary: bug fixes
 EOF
 git config user.email ci@hibernate.org
 git config user.name Hibernate-CI
