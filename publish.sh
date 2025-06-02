@@ -202,6 +202,10 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 					--no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
 					-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
 					-PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
+
+	if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+		exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-available-versions-json.sh" "$PROJECT" "$RELEASE_VERSION_FAMILY"
+	fi
 else
 	EXTRA_ARGS=""
 	if [ "$USE_JRELEASER_RELEASE" == "true" ]; then
@@ -213,6 +217,7 @@ else
 	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
+		exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-available-versions-json.sh" "$PROJECT" "$RELEASE_VERSION_FAMILY"
 	fi
 
 	bash -xe "$SCRIPTS_DIR/update-version.sh" "$PROJECT" "$DEVELOPMENT_VERSION"
