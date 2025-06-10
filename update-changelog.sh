@@ -36,7 +36,7 @@ case "$PROJECT" in
     JIRA_KEY="OGM"
     ;;
   *)
-    echo "ERROR: Unknown project: $project"
+    echo "ERROR: Unknown project: $PROJECT"
     exit 1
     ;;
 esac
@@ -65,6 +65,15 @@ function jira_version() {
 }
 
 #######################################################################################################################
+# Lists issues from JIRA as JSON
+function list_jira_issues() {
+  # REST URL used for getting all issues of given release - see https://docs.atlassian.com/jira/REST/latest/#d2e2450
+  jira_issues_url="https://hibernate.atlassian.net/rest/api/2/search/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${RELEASE_VERSION}${1}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200"
+
+  curl "$jira_issues_url" | jq -r '.issues'
+}
+
+#######################################################################################################################
 # Creates the required update for changelog.txt. It creates the following:
 #
 # <version> (<date>)
@@ -79,12 +88,9 @@ function jira_version() {
 #    ...
 #
 function create_changelog_update() {
-  # REST URL used for getting all issues of given release - see https://docs.atlassian.com/jira/REST/latest/#d2e2450
-  jira_issues_url="https://hibernate.atlassian.net/rest/api/2/search/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${RELEASE_VERSION}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200"
-
   echo "$RELEASE_VERSION ($(date +%Y-%m-%d))"
   echo "-------------------------"
-  curl "$jira_issues_url" | jq -r '.issues[] | (.fields.issuetype.name + "\t" + .key + "\t" + .fields.summary)' |
+  list_jira_issues | jq -r '.[] | (.fields.issuetype.name + "\t" + .key + "\t" + .fields.summary)' |
       while IFS=$'\t' read -r issuetype key summary; do
         if [ "$previous_issuetype" != "$issuetype" ]; then
           previous_issuetype="$issuetype"
@@ -108,6 +114,11 @@ if [ -z "$JIRA_VERSION" ]; then
 fi
 if [ "true" != "$(echo "$JIRA_VERSION" | jq '.released' )" ]; then
   echo "ERROR: Version $RELEASE_VERSION is not yet released in JIRA"
+  exit 1
+fi
+NON_FIXED="$(list_jira_issues "%20AND%20(resolution%20IS%20EMPTY%20OR%20resolution%20!%3D%20Fixed)" | jq -r '.[] | (.key)')"
+if [ -n "$NON_FIXED" ]; then
+  echo -e "ERROR: Version $RELEASE_VERSION has issues that are not marked as 'Fixed' in JIRA:\n$NON_FIXED"
   exit 1
 fi
 
