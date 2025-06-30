@@ -60,6 +60,22 @@ if [ -z "$RELEASE_VERSION" ]; then
 	exit 1
 fi
 
+if [ "$PROJECT" == "search" ]; then
+  PROJECT_MESSAGE_PREFIX='[HSEARCH] '
+elif [ "$PROJECT" == "validator" ]; then
+  PROJECT_MESSAGE_PREFIX='[HV] '
+elif [ "$PROJECT" == "ogm" ]; then
+  PROJECT_MESSAGE_PREFIX='[OGM] '
+elif [ "$PROJECT" == "orm" ]; then
+  PROJECT_MESSAGE_PREFIX='[ORM] '
+elif [ "$PROJECT" == "tools" ]; then
+  PROJECT_MESSAGE_PREFIX='[HBX] '
+elif [ "$PROJECT" == "reactive" ]; then
+  PROJECT_MESSAGE_PREFIX='[HR] '
+else
+  PROJECT_MESSAGE_PREFIX=''
+fi
+
 RELEASE_DATE=$(date +%Y-%m-%d)
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 RELEASE_FILE_NAME="./_data/projects/${PROJECT}/releases/${RELEASE_VERSION_FAMILY}/${RELEASE_VERSION}.yml"
@@ -69,5 +85,5 @@ EOF
 git config user.email ci@hibernate.org
 git config user.name Hibernate-CI
 git add $RELEASE_FILE_NAME
-git commit -m "[ORM] ${RELEASE_VERSION}"
+git commit -m "${PROJECT_MESSAGE_PREFIX}${RELEASE_VERSION}"
 exec_or_dry_run git push origin HEAD:production
