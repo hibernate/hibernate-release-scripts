@@ -68,7 +68,7 @@ function jira_version() {
 # Lists issues from JIRA as JSON
 function list_jira_issues() {
   # REST URL used for getting all issues of given release - see https://docs.atlassian.com/jira/REST/latest/#d2e2450
-  jira_issues_url="https://hibernate.atlassian.net/rest/api/2/search/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${RELEASE_VERSION}${1}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200"
+  jira_issues_url="https://hibernate.atlassian.net/rest/api/3/search/jql/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${RELEASE_VERSION}${1}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200"
 
   curl "$jira_issues_url" | jq -r '.issues'
 }
