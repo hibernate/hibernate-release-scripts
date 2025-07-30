@@ -31,6 +31,8 @@ elif [ "$PROJECT" == "reactive" ]; then
   STRIPPED_SUFFIX_FOR_TAG=".Final"
 elif [ "$PROJECT" == "hcann" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "localcache" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "tools" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "models" ]; then
