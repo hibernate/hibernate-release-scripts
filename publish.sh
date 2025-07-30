@@ -5,7 +5,7 @@ function usage() {
   echo
   echo "  $0 [options] <project> <release_version> <development_version> <branch>"
   echo
-  echo "    <project>                One of [search,validator,ogm,orm,reactive,tools,hcann,infra-*]"
+  echo "    <project>                One of [search,validator,ogm,orm,reactive,tools,hcann,localcache,infra-*]"
   echo "    <release_version>        The version to release (e.g. 6.0.1.Final)"
   echo "    <development_version>    The new version after the release (e.g. 6.0.2-SNAPSHOT)"
   echo "    <branch>                 The branch we want to release"
@@ -210,7 +210,7 @@ else
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$EXTRA_ARGS" "$PROJECT"
 	runJReleaser
 
-	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
+	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && "$PROJECT" != "localcache" &&  ! $PROJECT =~ ^infra-.+ ]]; then
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
 	fi

@@ -21,7 +21,7 @@ if ! [[ $VERSION =~ ^.+-SNAPSHOT$ ]]; then
 	exit 1
 fi
 
-if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "tools" ] || [[ $PROJECT =~ ^infra-.+ ]]; then
+if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "tools" ] || [ "$PROJECT" == "localcache" ] || [[ $PROJECT =~ ^infra-.+ ]]; then
   ./mvnw -Pci-build -DskipTests clean deploy
 elif [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
   ./gradlew clean publishAllPublicationsToSnapshotsRepository -x test --no-scan --no-daemon --no-build-cache --stacktrace

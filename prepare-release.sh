@@ -85,7 +85,7 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "m
 		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
 		-PgitRemote=origin -PgitBranch=$BRANCH $EXTRA_ARGS
 else
-	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && ! $PROJECT =~ ^infra-.+ ]]; then
+	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && "$PROJECT" != "localcache" && ! $PROJECT =~ ^infra-.+ ]]; then
 		# These projects do not have a distribution bundle archive,
 		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
 		# There is also no version in the readme and no changelog file.
