@@ -23,7 +23,13 @@ pushd $WORKSPACE
 
 if [ -f "./gradlew" ]; then
 	# Gradle-based build
-	echo "hibernateVersion=$NEW_VERSION" > ./gradle/version.properties
+	if [ -f "./gradle/version.properties" ]; then
+  	# ORM/Reactive custom version location:
+  	echo "hibernateVersion=$NEW_VERSION" > ./gradle/version.properties
+  else
+    # More standard location for other gradle-based projects:
+    sed -i "s/^version=.*$/version=$NEW_VERSION/g" gradle.properties
+  fi
 else
 	# Maven-based build
 	source "$SCRIPTS_DIR/mvn-setup.sh"
