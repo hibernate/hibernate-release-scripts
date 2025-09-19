@@ -33,15 +33,19 @@ DOCUMENTATION_DIRECTORY=distribution/target/unpacked/hibernate-${PROJECT}-${RELE
 if [ "$PROJECT" == "validator" ]; then
 	META_DESCRIPTION="Hibernate Validator, Annotation based constraints for your domain model - Reference Documentation"
 	META_KEYWORDS="hibernate, validator, hibernate validator, validation, bean validation"
+	PROJECT_MESSAGE_PREFIX='[HV] '
 elif [ "$PROJECT" == "ogm" ]; then
 	META_DESCRIPTION="Hibernate OGM, JPA for NoSQL datastores - Reference Documentation"
 	META_KEYWORDS="hibernate, ogm, hibernate ogm, nosql, jpa, infinispan, mongodb, neo4j, cassandra, couchdb, ehcache, redis"
+	PROJECT_MESSAGE_PREFIX='[OGM] '
 elif [ "$PROJECT" == "search" ]; then
 	META_DESCRIPTION="Hibernate Search, full text search for your entities - Reference Documentation"
 	META_KEYWORDS="hibernate, search, hibernate search, full text, lucene, elasticsearch"
+	PROJECT_MESSAGE_PREFIX='[HSEARCH] '
 else
 	META_DESCRIPTION=""
 	META_KEYWORDS=""
+	PROJECT_MESSAGE_PREFIX=''
 fi
 
 for file in $(find ${DOCUMENTATION_DIRECTORY}/reference/ -name \*.html); do
@@ -97,4 +101,71 @@ EOF
 	rm -f ${PROJECT}.json
 fi
 
+# push the docs to the github repo:
+if [[ -z "$DOCS_HIBERNATE_ORG_TARGET_DIR" ]]; then
+  DOCS_HIBERNATE_ORG_TARGET_DIR=distribution/target/repo
+fi
+DOCUMENTATION_DIRECTORY=$(realpath $DOCUMENTATION_DIRECTORY)
+mkdir -p ${DOCS_HIBERNATE_ORG_TARGET_DIR}
+pushd ${DOCS_HIBERNATE_ORG_TARGET_DIR}
+
+git config user.email ci@hibernate.org
+git config user.name Hibernate-CI
+git clone --single-branch --depth=1 git@github.com:hibernate/docs.hibernate.org.git .
+
+CURRENT_DOCS_GIT_LOCATION=${PROJECT}/${VERSION_FAMILY}
+
+rm -rf ${CURRENT_DOCS_GIT_LOCATION}
+cp -r ${DOCUMENTATION_DIRECTORY} ${CURRENT_DOCS_GIT_LOCATION}
+
+CURRENT_STABLE_VERSION=$(cat _outdated-content/${PROJECT}.json | jq -r ".stable")
+if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
+  jq ".stable = \"${VERSION_FAMILY}\"" _outdated-content/${PROJECT}.json > temp.json && mv temp.json _outdated-content/${PROJECT}.json
+fi
+git add -u
+git add ${CURRENT_DOCS_GIT_LOCATION}/
+
+git commit -m "${PROJECT_MESSAGE_PREFIX}${RELEASE_VERSION}"
+
+# How many times should we try to push-wait-pull-retry before we quit:
+MAX_ATTEMPTS=5
+# Delay between attempts in seconds:
+DELAY_BETWEEN_TRIES=5
+
+DOCS_PUSHED=1
+
+for (( i=1; i<=$MAX_ATTEMPTS; i++ ))
+do
+  echo "Attempt $i of $MAX_ATTEMPTS: Pushing changes..."
+
+  git push origin HEAD:main
+
+  if [ $? -eq 0 ]; then
+    echo "Git push successful!"
+    DOCS_PUSHED=0
+  fi
+
+  echo "Push failed. Waiting for $DELAY_BETWEEN_TRIES seconds before trying again..."
+  sleep $DELAY_BETWEEN_TRIES
+
+  if [ $i -lt $MAX_ATTEMPTS ]; then
+    echo "Rebasing and will try again..."
+    git pull --rebase origin main
+
+    if [ $? -ne 0 ]; then
+      echo "Rebase failed. Something is totally wrong here. Failing the build..."
+      DOCS_PUSHED=1
+    fi
+  fi
+done
+
 popd
+
+popd
+
+if [ $PUSH_SUCCESS -eq 0 ]; then
+  echo "Success pushing the docs."
+else
+  echo "Failed to push the docs!!!"
+  exit 1
+fi
