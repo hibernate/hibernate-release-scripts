@@ -86,4 +86,39 @@ git config user.email ci@hibernate.org
 git config user.name Hibernate-CI
 git add $RELEASE_FILE_NAME
 git commit -m "${PROJECT_MESSAGE_PREFIX}${RELEASE_VERSION}"
-exec_or_dry_run git push origin HEAD:production
+
+# How many times should we try to push-wait-pull-retry before we quit:
+MAX_ATTEMPTS=5
+# Delay between attempts in seconds:
+DELAY_BETWEEN_TRIES=5
+
+# We've already committed the changes so now it's just a matter of pushing them to remote.
+# If someone/something managed to push an update to the branch we work with before us we'll pull with rebase
+# and try to push again:
+for (( i=1; i<=$MAX_ATTEMPTS; i++ ))
+do
+  echo "Attempt $i of $MAX_ATTEMPTS: Pushing changes..."
+
+  exec_or_dry_run git push origin HEAD:production
+
+  if [ $? -eq 0 ]; then
+    echo "Git push successful!"
+    exit 0
+  fi
+
+  echo "Push failed. Waiting for $DELAY_BETWEEN_TRIES seconds before trying again..."
+  sleep $DELAY_BETWEEN_TRIES
+
+  if [ $i -lt $MAX_ATTEMPTS ]; then
+    echo "Rebasing and will try again..."
+    exec_or_dry_run git pull --rebase origin production
+
+    if [ $? -ne 0 ]; then
+      echo "Rebase failed. Something is totally wrong here. Failing the build..."
+      exit 1
+    fi
+  fi
+done
+
+echo "Failed to push after $MAX_ATTEMPTS attempts."
+exit 1
