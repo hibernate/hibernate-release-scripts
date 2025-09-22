@@ -59,9 +59,14 @@ for file in $(find ${DOCUMENTATION_DIRECTORY}/reference/ -name \*.html); do
 	fi
 done
 
-# Push the documentation to the doc server
 # Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
-rsync -rzh --progress --delete ${DOCUMENTATION_DIRECTORY}/ filemgmt-prod-sync.jboss.org:/docs_htdocs/hibernate/${PROJECT}/$VERSION_FAMILY
+PUBLISH_LOCATIONS=("filemgmt-prod-sync.jboss.org:/docs_htdocs/hibernate/", "in.relation.to:/var/www/docs.hibernate.org/")
+
+# Push the documentation to the doc server
+for location in "${PUBLISH_LOCATIONS[@]}"; do
+  echo "Publishing to $location"
+  rsync -rzh --progress --delete ${DOCUMENTATION_DIRECTORY}/ ${location}${PROJECT}/$VERSION_FAMILY
+done
 
 # If the release is the new stable one, we need to update the doc server (outdated content descriptor and /stable/ symlink)
 
@@ -85,9 +90,12 @@ if [[ $RELEASE_VERSION =~ .*\.Final ]]; then
 		fi
 
 		# filemgmt-prod*.jboss.org don't allow scp, so we'll just rsync a single file...
-		# That's a bit overkill but at least it works.
 		# Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
-		rsync -z --progress ${PROJECT}-updated.json filemgmt-prod-sync.jboss.org:/docs_htdocs/hibernate/_outdated-content/${PROJECT}.json
+		# That's a bit overkill but at least it works.
+		for location in "${PUBLISH_LOCATIONS[@]}"; do
+      echo "Publishing to $location"
+      rsync -z --progress ${PROJECT}-updated.json ${location}_outdated-content/${PROJECT}.json
+    done
 		rm -f ${PROJECT}-updated.json
 
 		# update the symlink of stable to the latest release
@@ -97,85 +105,14 @@ cd docs_htdocs/hibernate/stable
 rm ${PROJECT}
 ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
 EOF
+		sftp in.relation.to -b <<EOF
+cd /var/www/docs.hibernate.org/stable
+rm ${PROJECT}
+ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
+EOF
 	fi
 	rm -f ${PROJECT}.json
 fi
 
-# =============================================================================
-# Push the docs to the github repo:
-trap "rm -rf '${DOCS_HIBERNATE_ORG_TARGET_DIR}'" EXIT
-# How many times should we try to push-wait-pull-retry before we quit:
-MAX_ATTEMPTS=5
-# Delay between attempts in seconds:
-DELAY_BETWEEN_TRIES=5
-
-DOCS_PUSHED=1
-
-for (( i=1; i<=$MAX_ATTEMPTS; i++ ))
-do
-  echo "Attempt $i of $MAX_ATTEMPTS: Pushing changes..."
-
-  DOCS_HIBERNATE_ORG_TARGET_DIR=$(mktemp -d --tmpdir 'docs-hibernate-org-XXXXXXXXXX')
-  DOCUMENTATION_DIRECTORY=$(realpath $DOCUMENTATION_DIRECTORY)
-  pushd ${DOCS_HIBERNATE_ORG_TARGET_DIR}
-  echo "Hibernate docs repository location: $DOCS_HIBERNATE_ORG_TARGET_DIR"
-
-  # Use a sparse checkout because the working dir can be huge (more than 6 GB)
-  # while .git data is relatively small (about 300 MB)
-  git clone --sparse --depth 1 git@github.com:hibernate/docs.hibernate.org.git .
-  CURRENT_DOCS_GIT_LOCATION=${PROJECT}/${VERSION_FAMILY}
-  git sparse-checkout set "stable" "${CURRENT_DOCS_GIT_LOCATION}" "_outdated-content"
-
-  # Set up commit info
-  git config user.email ci@hibernate.org
-  git config user.name Hibernate-CI
-
-  # Copy documentation to the git repo for docs.hibernate.org
-  # rsync fails if the target is not there??? (can happen when the new series is added), let's just be safe and create the "missing" target:
-  mkdir -p "${CURRENT_DOCS_GIT_LOCATION}"
-  rsync -av \
-  	--delete \
-  	"${DOCUMENTATION_DIRECTORY}/" "${CURRENT_DOCS_GIT_LOCATION}"
-
-  if [[ $RELEASE_VERSION =~ .*\.Final ]]; then
-    CURRENT_STABLE_VERSION=$(cat _outdated-content/${PROJECT}.json | jq -r ".stable")
-    if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
-      jq ".stable = \"${VERSION_FAMILY}\"" _outdated-content/${PROJECT}.json > temp.json && mv temp.json _outdated-content/${PROJECT}.json
-      # update the symlink of stable to the latest release
-      pushd stable
-      rm ${PROJECT}
-      ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
-      popd
-    fi
-  fi
-
-  git add -A .
-  git commit -m "${PROJECT_MESSAGE_PREFIX}Documentation for ${RELEASE_VERSION}"
-  git push origin HEAD:main
-
-  if [ $? -eq 0 ]; then
-    echo "Git push successful!"
-    DOCS_PUSHED=0
-    break
-  fi
-
-  if [ $i -lt $MAX_ATTEMPTS ]; then
-    echo "Push failed. Waiting for $DELAY_BETWEEN_TRIES seconds before trying again..."
-    sleep $DELAY_BETWEEN_TRIES
-
-    echo "Clearing out the docs repository dir before recloning..."
-    popd
-    rm -rf "$DOCS_HIBERNATE_ORG_TARGET_DIR"
-  fi
-done
 
 popd
-
-popd
-
-if [ $DOCS_PUSHED -eq 0 ]; then
-  echo "Successfully pushed the docs."
-else
-  echo "Failed to push the docs!!!"
-  exit 1
-fi
