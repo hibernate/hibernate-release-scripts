@@ -101,32 +101,9 @@ EOF
 	rm -f ${PROJECT}.json
 fi
 
-# push the docs to the github repo:
-if [[ -z "$DOCS_HIBERNATE_ORG_TARGET_DIR" ]]; then
-  DOCS_HIBERNATE_ORG_TARGET_DIR=distribution/target/repo
-fi
-DOCUMENTATION_DIRECTORY=$(realpath $DOCUMENTATION_DIRECTORY)
-mkdir -p ${DOCS_HIBERNATE_ORG_TARGET_DIR}
-pushd ${DOCS_HIBERNATE_ORG_TARGET_DIR}
-
-git config user.email ci@hibernate.org
-git config user.name Hibernate-CI
-git clone --single-branch --depth=1 git@github.com:hibernate/docs.hibernate.org.git .
-
-CURRENT_DOCS_GIT_LOCATION=${PROJECT}/${VERSION_FAMILY}
-
-rm -rf ${CURRENT_DOCS_GIT_LOCATION}
-cp -r ${DOCUMENTATION_DIRECTORY} ${CURRENT_DOCS_GIT_LOCATION}
-
-CURRENT_STABLE_VERSION=$(cat _outdated-content/${PROJECT}.json | jq -r ".stable")
-if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
-  jq ".stable = \"${VERSION_FAMILY}\"" _outdated-content/${PROJECT}.json > temp.json && mv temp.json _outdated-content/${PROJECT}.json
-fi
-git add -u
-git add ${CURRENT_DOCS_GIT_LOCATION}/
-
-git commit -m "${PROJECT_MESSAGE_PREFIX}${RELEASE_VERSION}"
-
+# =============================================================================
+# Push the docs to the github repo:
+trap "rm -rf '${DOCS_HIBERNATE_ORG_TARGET_DIR}'" EXIT
 # How many times should we try to push-wait-pull-retry before we quit:
 MAX_ATTEMPTS=5
 # Delay between attempts in seconds:
@@ -138,24 +115,57 @@ for (( i=1; i<=$MAX_ATTEMPTS; i++ ))
 do
   echo "Attempt $i of $MAX_ATTEMPTS: Pushing changes..."
 
+  DOCS_HIBERNATE_ORG_TARGET_DIR=$(mktemp -d --tmpdir 'docs-hibernate-org-XXXXXXXXXX')
+  DOCUMENTATION_DIRECTORY=$(realpath $DOCUMENTATION_DIRECTORY)
+  pushd ${DOCS_HIBERNATE_ORG_TARGET_DIR}
+  echo "Hibernate docs repository location: $DOCS_HIBERNATE_ORG_TARGET_DIR"
+
+  # Use a sparse checkout because the working dir can be huge (more than 6 GB)
+  # while .git data is relatively small (about 300 MB)
+  git clone --sparse --depth 1 git@github.com:hibernate/docs.hibernate.org.git .
+  CURRENT_DOCS_GIT_LOCATION=${PROJECT}/${VERSION_FAMILY}
+  git sparse-checkout set "stable" "${CURRENT_DOCS_GIT_LOCATION}" "_outdated-content"
+
+  # Set up commit info
+  git config user.email ci@hibernate.org
+  git config user.name Hibernate-CI
+
+  # Copy documentation to the git repo for docs.hibernate.org
+  # rsync fails if the target is not there??? (can happen when the new series is added), let's just be safe and create the "missing" target:
+  mkdir -p "${CURRENT_DOCS_GIT_LOCATION}"
+  rsync -av \
+  	--delete \
+  	"${DOCUMENTATION_DIRECTORY}/" "${CURRENT_DOCS_GIT_LOCATION}"
+
+  if [[ $RELEASE_VERSION =~ .*\.Final ]]; then
+    CURRENT_STABLE_VERSION=$(cat _outdated-content/${PROJECT}.json | jq -r ".stable")
+    if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
+      jq ".stable = \"${VERSION_FAMILY}\"" _outdated-content/${PROJECT}.json > temp.json && mv temp.json _outdated-content/${PROJECT}.json
+      # update the symlink of stable to the latest release
+      pushd stable
+      rm ${PROJECT}
+      ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
+      popd
+    fi
+  fi
+
+  git add -A .
+  git commit -m "${PROJECT_MESSAGE_PREFIX}Documentation for ${RELEASE_VERSION}"
   git push origin HEAD:main
 
   if [ $? -eq 0 ]; then
     echo "Git push successful!"
     DOCS_PUSHED=0
+    break
   fi
 
-  echo "Push failed. Waiting for $DELAY_BETWEEN_TRIES seconds before trying again..."
-  sleep $DELAY_BETWEEN_TRIES
-
   if [ $i -lt $MAX_ATTEMPTS ]; then
-    echo "Rebasing and will try again..."
-    git pull --rebase origin main
+    echo "Push failed. Waiting for $DELAY_BETWEEN_TRIES seconds before trying again..."
+    sleep $DELAY_BETWEEN_TRIES
 
-    if [ $? -ne 0 ]; then
-      echo "Rebase failed. Something is totally wrong here. Failing the build..."
-      DOCS_PUSHED=1
-    fi
+    echo "Clearing out the docs repository dir before recloning..."
+    popd
+    rm -rf "$DOCS_HIBERNATE_ORG_TARGET_DIR"
   fi
 done
 
@@ -163,8 +173,8 @@ popd
 
 popd
 
-if [ $PUSH_SUCCESS -eq 0 ]; then
-  echo "Success pushing the docs."
+if [ $DOCS_PUSHED -eq 0 ]; then
+  echo "Successfully pushed the docs."
 else
   echo "Failed to push the docs!!!"
   exit 1
