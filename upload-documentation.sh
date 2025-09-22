@@ -20,28 +20,54 @@ fi
 
 pushd ${WORKSPACE}
 
-DIST=distribution/target/dist/hibernate-$PROJECT-$RELEASE_VERSION-dist.zip
-if [ ! -f $DIST ]; then
-	# Legacy layout; see upload-distribution.sh
-	DIST=distribution/target/hibernate-$PROJECT-$RELEASE_VERSION-dist.zip
+# We expect that projects publish documentation files into a `documentation` sibling directory to the maven artifacts one
+#  consumed by JReleaser. Hence we first check those locations and in the end fallback to the "legacy" `distribution` based directory structure:
+# target/staging-deploy
+#  ├── documentation  // Documentation publishing location
+#  └── maven  // Local maven repository to which projects publish the artifacts to deploy.
+#      └── org
+#          └── hibernate
+#              └── smth...
+
+if [ -d "target/staging-deploy/documentation" ]; then
+  DOCUMENTATION_DIRECTORY="target/staging-deploy/documentation"
+elif [ -d "build/staging-deploy/documentation" ]; then
+  DOCUMENTATION_DIRECTORY="build/staging-deploy/documentation"
+else
+  # none of the "new" docs locations are available, let's check for the dist archive and try to unpack it:
+  DIST=distribution/target/dist/hibernate-$PROJECT-$RELEASE_VERSION-dist.zip
+  if [ ! -f $DIST ]; then
+    # Legacy layout; see upload-distribution.sh
+    DIST=distribution/target/hibernate-$PROJECT-$RELEASE_VERSION-dist.zip
+  fi
+  if [ -f $DIST ]; then
+    unzip $DIST -d distribution/target/unpacked
+    DOCUMENTATION_DIRECTORY=distribution/target/unpacked/hibernate-${PROJECT}-${RELEASE_VERSION}/docs
+  fi
 fi
-unzip $DIST -d distribution/target/unpacked
-DOCUMENTATION_DIRECTORY=distribution/target/unpacked/hibernate-${PROJECT}-${RELEASE_VERSION}/docs
 
+if [ ! -v DOCUMENTATION_DIRECTORY ]; then
+  echo "No documentation was found for the $PROJECT in any of the expected locations."
+  echo "Assuming project does not publish any documentation. Exiting..."
+  exit 0
+else
+  echo "Publishing documentation for $PROJECT from $DOCUMENTATION_DIRECTORY"
+fi
+
+# Here 0 == false and 1 == true:
+REQUIRES_OUTDATED_CONTENT_UPDATE=0
 # Add various metadata to the header
-
 if [ "$PROJECT" == "validator" ]; then
 	META_DESCRIPTION="Hibernate Validator, Annotation based constraints for your domain model - Reference Documentation"
 	META_KEYWORDS="hibernate, validator, hibernate validator, validation, bean validation"
-	PROJECT_MESSAGE_PREFIX='[HV] '
+	REQUIRES_OUTDATED_CONTENT_UPDATE=1
 elif [ "$PROJECT" == "ogm" ]; then
 	META_DESCRIPTION="Hibernate OGM, JPA for NoSQL datastores - Reference Documentation"
 	META_KEYWORDS="hibernate, ogm, hibernate ogm, nosql, jpa, infinispan, mongodb, neo4j, cassandra, couchdb, ehcache, redis"
-	PROJECT_MESSAGE_PREFIX='[OGM] '
 elif [ "$PROJECT" == "search" ]; then
 	META_DESCRIPTION="Hibernate Search, full text search for your entities - Reference Documentation"
 	META_KEYWORDS="hibernate, search, hibernate search, full text, lucene, elasticsearch"
-	PROJECT_MESSAGE_PREFIX='[HSEARCH] '
+	REQUIRES_OUTDATED_CONTENT_UPDATE=1
 else
 	META_DESCRIPTION=""
 	META_KEYWORDS=""
@@ -59,60 +85,58 @@ for file in $(find ${DOCUMENTATION_DIRECTORY}/reference/ -name \*.html); do
 	fi
 done
 
+function version_gt() {
+  test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1";
+}
 # Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
-PUBLISH_LOCATIONS=("filemgmt-prod-sync.jboss.org:/docs_htdocs/hibernate/", "in.relation.to:/var/www/docs.hibernate.org/")
+PUBLISH_SERVERS=("filemgmt-prod-sync.jboss.org", "in.relation.to")
+PUBLISH_SFTP_SERVERS=("filemgmt-prod.jboss.org", "in.relation.to")
+PUBLISH_SERVER_DIRECTORIES=("/docs_htdocs/hibernate/", "/var/www/docs.hibernate.org/")
+PUBLISH_SERVER_HTTP_ADDRESSES=("https://docs.jboss.org/hibernate/", "https://docs.hibernate.org/")
+NUMBER_OF_PUBLISH_LOCATIONS=${#PUBLISH_SERVERS[@]}
 
 # Push the documentation to the doc server
-for location in "${PUBLISH_LOCATIONS[@]}"; do
-  echo "Publishing to $location"
-  rsync -rzh --progress --delete ${DOCUMENTATION_DIRECTORY}/ ${location}${PROJECT}/$VERSION_FAMILY
+for (( i=0; i<$NUMBER_OF_PUBLISH_LOCATIONS; i++ )); do
+  REMOTE_DIRECTORY="${PUBLISH_SERVERS[$i]}:${PUBLISH_SERVER_DIRECTORIES[$i]}"
+  echo "================================================================================"
+  echo "Publishing to $REMOTE_DIRECTORY"
+  echo "================================================================================"
+  rsync -rzh --progress --delete ${DOCUMENTATION_DIRECTORY}/ ${REMOTE_DIRECTORY}${PROJECT}/$VERSION_FAMILY
+
+  # If the release is the new stable one, we need to update the doc server (outdated content descriptor and /stable/ symlink)
+  if [ REQUIRES_OUTDATED_CONTENT_UPDATE -eq 1 ]; then
+    if [[ $RELEASE_VERSION =~ .*\.Final ]]; then
+      wget -q "${PUBLISH_SERVER_HTTP_ADDRESSES[$i]}_outdated-content/${PROJECT}.json" -O ${PROJECT}.json
+      if [ ! -s ${PROJECT}.json ]; then
+        echo "Error downloading the ${PROJECT}.json descriptor. Exiting."
+        exit 1
+      fi
+      CURRENT_STABLE_VERSION=$(cat ${PROJECT}.json | jq -r ".stable")
+
+      if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
+        cat ${PROJECT}.json | jq ".stable = \"$VERSION_FAMILY\"" > ${PROJECT}-updated.json
+        if [ ! -s ${PROJECT}-updated.json ]; then
+          echo "Error updating the ${PROJECT}.json descriptor. Exiting."
+          exit 1
+        fi
+
+        # filemgmt-prod*.jboss.org don't allow scp, so we'll just rsync a single file...
+        # Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
+        # That's a bit overkill but at least it works.
+        rsync -z --progress ${PROJECT}-updated.json ${REMOTE_DIRECTORY}_outdated-content/${PROJECT}.json
+        rm -f ${PROJECT}-updated.json
+
+        # update the symlink of stable to the latest release
+        # don't indent the EOF!
+        sftp ${PUBLISH_SFTP_SERVERS[$i]} -b <<EOF
+cd ${PUBLISH_SERVER_DIRECTORIES[$i]}stable
+rm ${PROJECT}
+ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
+EOF
+      fi
+      rm -f ${PROJECT}.json
+    fi
+  fi
 done
-
-# If the release is the new stable one, we need to update the doc server (outdated content descriptor and /stable/ symlink)
-
-function version_gt() {
-	test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1";
-}
-
-if [[ $RELEASE_VERSION =~ .*\.Final ]]; then
-	wget -q http://docs.jboss.org/hibernate/_outdated-content/${PROJECT}.json -O ${PROJECT}.json
-	if [ ! -s ${PROJECT}.json ]; then
-		echo "Error downloading the ${PROJECT}.json descriptor. Exiting."
-		exit 1
-	fi
-	CURRENT_STABLE_VERSION=$(cat ${PROJECT}.json | jq -r ".stable")
-
-	if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
-		cat ${PROJECT}.json | jq ".stable = \"$VERSION_FAMILY\"" > ${PROJECT}-updated.json
-		if [ ! -s ${PROJECT}-updated.json ]; then
-			echo "Error updating the ${PROJECT}.json descriptor. Exiting."
-			exit 1
-		fi
-
-		# filemgmt-prod*.jboss.org don't allow scp, so we'll just rsync a single file...
-		# Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
-		# That's a bit overkill but at least it works.
-		for location in "${PUBLISH_LOCATIONS[@]}"; do
-      echo "Publishing to $location"
-      rsync -z --progress ${PROJECT}-updated.json ${location}_outdated-content/${PROJECT}.json
-    done
-		rm -f ${PROJECT}-updated.json
-
-		# update the symlink of stable to the latest release
-		# don't indent the EOF!
-		sftp filemgmt-prod.jboss.org -b <<EOF
-cd docs_htdocs/hibernate/stable
-rm ${PROJECT}
-ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
-EOF
-		sftp in.relation.to -b <<EOF
-cd /var/www/docs.hibernate.org/stable
-rm ${PROJECT}
-ln -s ../${PROJECT}/$VERSION_FAMILY ${PROJECT}
-EOF
-	fi
-	rm -f ${PROJECT}.json
-fi
-
 
 popd
