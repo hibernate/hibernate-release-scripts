@@ -89,10 +89,10 @@ function version_gt() {
   test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1";
 }
 # Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
-PUBLISH_SERVERS=("filemgmt-prod-sync.jboss.org", "in.relation.to")
-PUBLISH_SFTP_SERVERS=("filemgmt-prod.jboss.org", "in.relation.to")
-PUBLISH_SERVER_DIRECTORIES=("/docs_htdocs/hibernate/", "/var/www/docs.hibernate.org/")
-PUBLISH_SERVER_HTTP_ADDRESSES=("https://docs.jboss.org/hibernate/", "https://docs.hibernate.org/")
+PUBLISH_SERVERS=("filemgmt-prod-sync.jboss.org" "in.relation.to")
+PUBLISH_SFTP_SERVERS=("filemgmt-prod.jboss.org" "in.relation.to")
+PUBLISH_SERVER_DIRECTORIES=("/docs_htdocs/hibernate/" "/var/www/docs.hibernate.org/")
+PUBLISH_SERVER_HTTP_ADDRESSES=("https://docs.jboss.org/hibernate/" "https://docs.hibernate.org/")
 NUMBER_OF_PUBLISH_LOCATIONS=${#PUBLISH_SERVERS[@]}
 
 # Push the documentation to the doc server
