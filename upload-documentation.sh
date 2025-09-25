@@ -46,32 +46,49 @@ else
   fi
 fi
 
-if [ ! -v DOCUMENTATION_DIRECTORY ]; then
-  echo "No documentation was found for the $PROJECT in any of the expected locations."
-  echo "Assuming project does not publish any documentation. Exiting..."
-  exit 0
-else
-  echo "Publishing documentation for $PROJECT from $DOCUMENTATION_DIRECTORY"
-fi
-
 # Here 0 == false and 1 == true:
 REQUIRES_OUTDATED_CONTENT_UPDATE=0
+REQUIRES_DOCUMENTATION=0
 # Add various metadata to the header
 if [ "$PROJECT" == "validator" ]; then
 	META_DESCRIPTION="Hibernate Validator, Annotation based constraints for your domain model - Reference Documentation"
 	META_KEYWORDS="hibernate, validator, hibernate validator, validation, bean validation"
 	REQUIRES_OUTDATED_CONTENT_UPDATE=1
-elif [ "$PROJECT" == "ogm" ]; then
-	META_DESCRIPTION="Hibernate OGM, JPA for NoSQL datastores - Reference Documentation"
-	META_KEYWORDS="hibernate, ogm, hibernate ogm, nosql, jpa, infinispan, mongodb, neo4j, cassandra, couchdb, ehcache, redis"
+	REQUIRES_DOCUMENTATION=1
 elif [ "$PROJECT" == "search" ]; then
 	META_DESCRIPTION="Hibernate Search, full text search for your entities - Reference Documentation"
 	META_KEYWORDS="hibernate, search, hibernate search, full text, lucene, elasticsearch"
 	REQUIRES_OUTDATED_CONTENT_UPDATE=1
+	REQUIRES_DOCUMENTATION=1
+elif [ "$PROJECT" == "orm" ]; then
+	META_DESCRIPTION="Hibernate ORM, relational persistence for idiomatic Java - Reference Documentation"
+	META_KEYWORDS="hibernate, orm, hibernate orm, database, db, jpa, sql"
+	REQUIRES_OUTDATED_CONTENT_UPDATE=1
+	REQUIRES_DOCUMENTATION=1
+elif [ "$PROJECT" == "reactive" ]; then
+	META_DESCRIPTION="Hibernate Reactive, reactive API for Hibernate ORM - Reference Documentation"
+	META_KEYWORDS="hibernate, reactive, hibernate reactive, database, db, vert.x"
+	REQUIRES_OUTDATED_CONTENT_UPDATE=1
+	REQUIRES_DOCUMENTATION=1
+elif [ "$PROJECT" == "ogm" ]; then
+	META_DESCRIPTION="Hibernate OGM, JPA for NoSQL datastores - Reference Documentation"
+	META_KEYWORDS="hibernate, ogm, hibernate ogm, nosql, jpa, infinispan, mongodb, neo4j, cassandra, couchdb, ehcache, redis"
 else
 	META_DESCRIPTION=""
 	META_KEYWORDS=""
 	PROJECT_MESSAGE_PREFIX=''
+fi
+
+if [ ! -v DOCUMENTATION_DIRECTORY ]; then
+  echo "No documentation was found for the $PROJECT in any of the expected locations."
+  if [ REQUIRES_DOCUMENTATION -eq 1 ]; then
+    echo "Project $PROJECT requires documentation to be published. Failing the build..."
+    exit 1
+  fi
+  echo "Assuming project does not publish any documentation. Exiting..."
+  exit 0
+else
+  echo "Publishing documentation for $PROJECT from $DOCUMENTATION_DIRECTORY"
 fi
 
 for file in $(find ${DOCUMENTATION_DIRECTORY}/reference/ -name \*.html); do
