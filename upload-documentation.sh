@@ -131,7 +131,8 @@ for (( i=0; i<$NUMBER_OF_PUBLISH_LOCATIONS; i++ )); do
       CURRENT_STABLE_VERSION=$(cat ${PROJECT}.json | jq -r ".stable")
 
       if [ "$CURRENT_STABLE_VERSION" != "$VERSION_FAMILY" ] && version_gt $VERSION_FAMILY $CURRENT_STABLE_VERSION; then
-        cat ${PROJECT}.json | jq ".stable = \"$VERSION_FAMILY\"" > ${PROJECT}-updated.json
+        jq ".stable = \"$VERSION_FAMILY\"" ${PROJECT}.json > ${PROJECT}-updated.json
+        jq ".versions |= [{\"version\": \"$VERSION_FAMILY\"}] + (. // [])" ${PROJECT}-updated.json > ${PROJECT}.json
         if [ ! -s ${PROJECT}-updated.json ]; then
           echo "Error updating the ${PROJECT}.json descriptor. Exiting."
           exit 1
@@ -140,7 +141,7 @@ for (( i=0; i<$NUMBER_OF_PUBLISH_LOCATIONS; i++ )); do
         # filemgmt-prod*.jboss.org don't allow scp, so we'll just rsync a single file...
         # Note we have to use filemgmt-prod-sync.jboss.org for rsync, not filemgmt.jboss.org or filemgmt-prod.jboss.org
         # That's a bit overkill but at least it works.
-        rsync -z --progress ${PROJECT}-updated.json ${REMOTE_DIRECTORY}_outdated-content/${PROJECT}.json
+        rsync -z --progress ${PROJECT}.json ${REMOTE_DIRECTORY}_outdated-content/${PROJECT}.json
         rm -f ${PROJECT}-updated.json
 
         # update the symlink of stable to the latest release
