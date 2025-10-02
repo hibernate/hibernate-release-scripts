@@ -46,7 +46,16 @@ then
 	exit 0
 fi
 
+REVS_TO_IGNORE_FILE=".release/ignore-revs"
+log "Revs to ignore:"
+if ! [[ -e "$REVS_TO_IGNORE_FILE" ]]; then
+  REVS_TO_IGNORE_FILE=/dev/null
+  log "None"
+else
+  cat 1>&2 "$REVS_TO_IGNORE_FILE"
+fi
 # Displays the last few commits on stderr (thanks to tee) and just the count on stdout (thanks to wc)
 git log $LAST_RELEASE_COMMIT..HEAD -E "--grep=${MESSAGE_PATTERN}" --format='  %H %s' \
+  | grep -v -f <(grep -v '^\s*$' "$REVS_TO_IGNORE_FILE") \
   | tee >(echo 1>&2 "Releasable commits (max 10 displayed):"; tail -n 10 1>&2) \
   | wc -l
