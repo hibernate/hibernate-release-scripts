@@ -121,7 +121,7 @@ for (( i=0; i<$NUMBER_OF_PUBLISH_LOCATIONS; i++ )); do
   rsync -rzh --progress --delete ${DOCUMENTATION_DIRECTORY}/ ${REMOTE_DIRECTORY}${PROJECT}/$VERSION_FAMILY
 
   # If the release is the new stable one, we need to update the doc server (outdated content descriptor and /stable/ symlink)
-  if [ REQUIRES_OUTDATED_CONTENT_UPDATE -eq 1 ]; then
+  if [ $REQUIRES_OUTDATED_CONTENT_UPDATE -eq 1 ]; then
     if [[ $RELEASE_VERSION =~ .*\.Final ]]; then
       wget -q "${PUBLISH_SERVER_HTTP_ADDRESSES[$i]}_outdated-content/${PROJECT}.json" -O ${PROJECT}.json
       if [ ! -s ${PROJECT}.json ]; then
