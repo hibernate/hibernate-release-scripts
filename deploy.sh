@@ -2,7 +2,7 @@
 
 USE_JRELEASER_RELEASE=false
 
-while getopts 'j:' opt; do
+while getopts 'j' opt; do
   case "$opt" in
   j)
     USE_JRELEASER_RELEASE=true
