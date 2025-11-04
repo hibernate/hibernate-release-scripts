@@ -154,7 +154,21 @@ function runJReleaser() {
 		fi
 
 		# Execute a JReleaser command such as 'full-release'
-		$SCRIPTS_DIR/jreleaser/bin/jreleaser full-release \
+		# Let's try staged deployment i.e.:
+		#  - we do the upload stage first
+		#  - we read the deployment ID
+		#  - we run jreleaser again but this time with the deployment ID and the publish state
+		JRELEASER_MAVENCENTRAL_STAGE="UPLOAD" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
+				-Djreleaser.project.version="$RELEASE_VERSION" \
+				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
+				--config-file $CONFIG_FILE \
+				--basedir $(realpath $WORKSPACE)
+
+		JRELEASER_LOG_FILE="$(realpath $WORKSPACE)/out/jreleaser/trace.log"
+		DEPLOYMENT_ID=$(grep 'Bundle .* uploaded as deployment ' $JRELEASER_LOG_FILE | awk '{print $NF}')
+		echo "Found the deployment id: $DEPLOYMENT_ID"
+
+		JRELEASER_MAVENCENTRAL_STAGE="PUBLISH" JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_DEPLOYMENT_ID="$DEPLOYMENT_ID" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
@@ -211,7 +225,7 @@ if [ $IS_GRADLE_PROJECT -eq 1 ]; then
 else
 	EXTRA_ARGS=""
 	if [ "$USE_JRELEASER_RELEASE" == "true" ]; then
-		EXTRA_ARGS=" -j"
+		EXTRA_ARGS="-j"
 	fi
 	bash -xe "$SCRIPTS_DIR/deploy.sh" "$EXTRA_ARGS" "$PROJECT"
 	runJReleaser
