@@ -22,3 +22,12 @@ deploy:
         applyMavenCentralRules: true
         stagingRepositories:
           - target/staging-deploy/maven
+hooks:
+  script:
+    success:
+      - continueOnError: false
+        verbose: true
+        shell: SH
+        run: 'echo "Deployment id: {{jreleaser.deploy.maven.mavencentral.deployment.id}} {{jreleaser.deploy.maven.mavencentral.maven-central.deployment.id}}"'
+        filter:
+          includes: ['deploy']
