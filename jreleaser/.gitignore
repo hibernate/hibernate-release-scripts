@@ -1,4 +1,7 @@
 # The folder into which we install jreleaser into
 *
 !.gitignore
-!/configuration
+!configuration
+!configuration/*
+!github-release-note-template
+!github-release-note-template/*

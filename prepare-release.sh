@@ -67,35 +67,75 @@ pushd $WORKSPACE
 git config --local user.name "Hibernate CI"
 git config --local user.email "ci@hibernate.org"
 
-if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
-	RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-	RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
-	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
+# Make sure we aren't in a detached state, as otherwise JReleaser may get confused...
+git checkout "$BRANCH"
+git pull origin "$BRANCH"
+# we fetch the tags so that JReleaser can find the "previous" one
+git fetch --tags
 
-	EXTRA_ARGS=""
-	if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
-		EXTRA_ARGS+=" publishAllPublicationsToStagingRepository"
-	fi
+"$SCRIPTS_DIR/validate-credentials.sh" $PROJECT
+if [ -f "$WORKSPACE/README.md" ]; then
+  "$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
+fi
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
+  "$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
+fi
+"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
 
-	# set release version
-	# update changelog from JIRA
-	# tags the version
-	# changes the version to the provided development version
-	./gradlew clean releasePrepare -x test --no-scan --no-daemon --no-build-cache \
-		-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
-		-PgitRemote=origin -PgitBranch=$BRANCH $EXTRA_ARGS
-else
-	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && "$PROJECT" != "localcache" && ! $PROJECT =~ ^infra-.+ ]]; then
+if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
 		# These projects do not have a distribution bundle archive,
 		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
 		# There is also no version in the readme and no changelog file.
 		"$SCRIPTS_DIR/check-sourceforge-availability.sh"
-		"$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
-		"$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
-	fi
-	"$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
-	"$SCRIPTS_DIR/update-version.sh" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
-	"$SCRIPTS_DIR/create-tag.sh" $PROJECT $RELEASE_VERSION
+fi
+
+"$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing release $RELEASE_VERSION" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
+
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+	RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+	RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
+
+	./gradlew clean releasePrepare -x test --no-scan --no-daemon --no-build-cache
+else
+  	if [ "$PROJECT" == "ogm" ]; then
+  		ADDITIONAL_OPTIONS="-DmongodbProvider=external -DskipITs"
+  	else
+  		ADDITIONAL_OPTIONS=""
+  	fi
+
+  	source "$SCRIPTS_DIR/mvn-setup.sh"
+
+  	./mvnw clean deploy \
+  		-Pdocbook,documentation-pdf,dist,perf,relocation,release \
+  		-DperformRelease=true \
+  		-DskipTests=true -Dcheckstyle.skip=true \
+  		-Dmaven.compiler.useIncrementalCompilation=false \
+  		-Ddevelocity.enabled=false \
+  		-Dscan=false -Dno-build-cache \
+  		-Dgradle.cache.remote.enabled=false -Dgradle.cache.local.enabled=false \
+  		-Ddevelocity.cache.remote.enabled=false -Ddevelocity.cache.local.enabled=false \
+  	 	$ADDITIONAL_OPTIONS
+fi
+
+# Let's check that there are any artifacts in the [staging-dir]/maven and some documentation in [staging-dir]/documentation
+# See the "jreleaser/configuration" directory for the staging directories used by different projects:
+STAGING_ROOT_DIRECTORY=""
+if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+    STAGING_ROOT_DIRECTORY="build/staging-deploy"
+else
+    STAGING_ROOT_DIRECTORY="target/staging-deploy"
+fi
+
+if [ -z $(find "$STAGING_ROOT_DIRECTORY/maven" -mindepth 1 -print -quit) ]; then
+  echo "$PROJECT main artifacts are missing from the staging directory. Aborting the release!"
+  exit 1
+fi
+
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "search" ]; then
+  if [ -z $(find "$STAGING_ROOT_DIRECTORY/documentation" -mindepth 1 -print -quit) ]; then
+    echo "$PROJECT documentation is missing from the staging directory. Aborting the release!"
+    exit 1
+  fi
 fi
 
 popd
