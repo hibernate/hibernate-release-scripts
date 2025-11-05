@@ -16,6 +16,8 @@ function usage() {
   echo "    -d            Dry run; do not push, deploy or publish anything."
 }
 
+function needs_arg() { if [ -z "$OPTARG" ]; then die "No arg for --$opt option"; fi; }
+
 #--------------------------------------------
 # Option parsing
 
@@ -25,8 +27,18 @@ function exec_or_dry_run() {
 PUSH_CHANGES=true
 DRY_RUN=false
 USE_JRELEASER_RELEASE=false
+NOTES_FILE=""
 
-while getopts 'djh:' opt; do
+while getopts 'djh-:' opt; do
+  if [ "$opt" = "-" ]; then
+    # long option: reformulate opt and OPTARG
+    #     - extract long option name
+    opt="${OPTARG%%=*}"
+    #     - extract long option argument (may be empty)
+    OPTARG="${OPTARG#"$opt"}"
+    #     - remove assigning `=`
+    OPTARG="${OPTARG#=}"
+  fi
   case "$opt" in
   h)
     usage
@@ -44,6 +56,11 @@ while getopts 'djh:' opt; do
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
     }
+    ;;
+  notes)
+    needs_arg
+    NOTES_FILE="$OPTARG"
+    echo "Using external notes-file : $notesFile"
     ;;
   \?)
     usage
@@ -124,56 +141,123 @@ function cleanup() {
 trap "cleanup" EXIT
 
 #--------------------------------------------
+function log() {
+  echo 1>&2 "$@"
+}
 
-function runJReleaser() {
+function determineJReleaserConfigFile() {
+  log "Start determining JReleaser config file..."
+  local CONFIG_FILE=""
+  if [ -f "./jreleaser.yml" ]; then
+    # There is a jreleaser.yml in the project root. Using this configuration:
+    CONFIG_FILE="./jreleaser.yml"
+  else
+    BRANCH_NAME=$BRANCH
+    log "Current branch is: $BRANCH_NAME"
+
+    # Reactive and Models are using a different "target" directory, hence, a different JReleaser config:
+    if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+      CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_alternative.yml"
+    else
+      CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser.yml"
+    fi
+  fi
+  echo "$CONFIG_FILE"
+}
+
+function uploadArtifactsToCentralAndPublishToGitHub() {
 	if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
 		# JReleaser-based build
 		source "$SCRIPTS_DIR/jreleaser-setup.sh"
 
-		echo "Start determining JReleaser config file..."
-		if [ -f "./jreleaser.yml" ]; then
-			# There is a jreleaser.yml in the project root. Using this configuration:
-			CONFIG_FILE="./jreleaser.yml"
-		else
-			BRANCH_NAME=$BRANCH
-			echo "Current branch is: $BRANCH_NAME"
+    local CONFIG_FILE=$(determineJReleaserConfigFile)
 
-			if [ "$PROJECT" == "orm" ]; then
-				if [ "$BRANCH_NAME" == "main" ]; then
-					CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_manual.yml"
-				else
-					CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_automatic.yml"
-				fi
-			elif [ "$PROJECT" == "reactive" ]; then
-				CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_automatic_alternative.yml"
-			elif [ "$PROJECT" == "models" ]; then
-				CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_automatic_alternative.yml"
-			else
-				CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_manual.yml"
-			fi
-		fi
+    # We are using "staged deployments" here.
+    # The idea is that we first just upload the bundle do more work and then publish it.
+    # The stages are controlled by the `JRELEASER_MAVENCENTRAL_STAGE` parameter.
+    #
+    # See also: https://jreleaser.org/guide/latest/reference/deploy/maven/maven-central.html#_staged_deployments
 
-		# Execute a JReleaser command such as 'full-release'
-		# Let's try staged deployment i.e.:
-		#  - we do the upload stage first
-		#  - we read the deployment ID
-		#  - we run jreleaser again but this time with the deployment ID and the publish state
+    if [ -f "$SCRIPTS_DIR/jreleaser/github-release-note-template/$PROJECT.tpl" ]; then
+      cp "$SCRIPTS_DIR/jreleaser/github-release-note-template/$PROJECT.tpl" "$SCRIPTS_DIR/jreleaser/changelog.tpl"
+    else
+      cp "$SCRIPTS_DIR/jreleaser/github-release-note-template/generic.tpl" "$SCRIPTS_DIR/jreleaser/changelog.tpl"
+    fi
+
+    # determine the main body of the release notes..
+    local NOTES_CONTENT=""
+    if [ -n "$NOTES_FILE" -a -f "$NOTES_FILE" ]; then
+      # a notes file was passed to the script - read its contents as the main content
+      NOTES_CONTENT=$(cat "$NOTES_FILE")
+    else
+      # use the generic content
+      NOTES_CONTENT="This release introduces a few minor improvements as well as bug fixes."
+    fi
+
+    local STRIPPED_SUFFIX_FOR_TAG=""
+    if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+      STRIPPED_SUFFIX_FOR_TAG=".Final"
+    fi
+
+    local RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
+    local RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+    local RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
+
+    local TAG_NAME=""
+    if [ -n "$STRIPPED_SUFFIX_FOR_TAG" -a "$RELEASE_SUFFIX" == "$STRIPPED_SUFFIX_FOR_TAG" ]; then
+      TAG_NAME=$RELEASE_VERSION_BASIS
+    else
+      TAG_NAME=$RELEASE_VERSION
+    fi
+
+    # we print the template into a "known" location" so that the
+    # other "main" template can reference it and so that we could use properties in the release notes as well:
+    #
+    # but if the main template does not use the partial, we still pass the content of the notes through -P to JReleaser.
+    echo "$NOTES_CONTENT" > "$SCRIPTS_DIR/jreleaser/notesContent.tpl"
+
+    # Note: we add the "currentBranch" parameter so that the hook to push the changes to the remote is executed
+    #  before JReleaser creates tags and GH releases:
 		JRELEASER_MAVENCENTRAL_STAGE="UPLOAD" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
-				--basedir $(realpath $WORKSPACE)
+				--basedir $(realpath $WORKSPACE) \
+				-PreleaseVersionFamily="$RELEASE_VERSION_FAMILY" -PreleaseVersion="$RELEASE_VERSION" -PnotesContent="$NOTES_CONTENT" -PtagName="$TAG_NAME" -PcurrentBranch="$BRANCH"
+	else
+	  echo "Release cannot complete without a JReleaser configuration."
+	  exit 1
+	fi
+}
 
-		JRELEASER_LOG_FILE="$(realpath $WORKSPACE)/out/jreleaser/trace.log"
-		DEPLOYMENT_ID=$(grep 'Bundle .* uploaded as deployment ' $JRELEASER_LOG_FILE | awk '{print $NF}')
-		echo "Found the deployment id: $DEPLOYMENT_ID"
+function publishUploadedArtifactsOnCentral() {
+	if [ -f "./jreleaser.yml" ] || [ "$USE_JRELEASER_RELEASE" == "true" ]; then
+    local DEPLOYMENT_ID=$1
+    if [ -z "$DEPLOYMENT_ID" ]; then
+    	echo "ERROR: Deployment ID not supplied"
+    	exit 1
+    fi
+    local CONFIG_FILE=$(determineJReleaserConfigFile)
 
-		JRELEASER_MAVENCENTRAL_STAGE="PUBLISH" JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_DEPLOYMENT_ID="$DEPLOYMENT_ID" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
+    # JReleaser-based build
+		source "$SCRIPTS_DIR/jreleaser-setup.sh"
+
+    # Note that for the deploy (which should just publish the uploaded bundle on Maven Central) action
+    #  we do not need to run the release-success hook, hance we don't need the `currentBranch` parameter here:
+		JRELEASER_MAVENCENTRAL_STAGE="PUBLISH" JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_DEPLOYMENT_ID="$DEPLOYMENT_ID" \
+		    JRELEASER_SKIP_TAG="true" JRELEASER_SKIP_RELEASE="true" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" deploy \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
 				--basedir $(realpath $WORKSPACE)
 	fi
+}
+
+function currentDeploymentId() {
+  local JRELEASER_LOG_FILE="$(realpath $WORKSPACE)/out/jreleaser/trace.log"
+  local DEPLOYMENT_ID=$(grep 'Bundle .* uploaded as deployment ' $JRELEASER_LOG_FILE | awk '{print $NF}')
+  log "Found the deployment id: $DEPLOYMENT_ID"
+  echo "$DEPLOYMENT_ID"
 }
 
 #--------------------------------------------
@@ -196,50 +280,22 @@ if [ -z "$IMPORTED_KEY" ]; then
 	exit 1
 fi
 
+git config --local user.name "Hibernate CI"
+git config --local user.email "ci@hibernate.org"
+
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
-if [ -f "./gradlew" ]; then
-	IS_GRADLE_PROJECT=1
-else
-	IS_GRADLE_PROJECT=0
-fi
-
-if [ $IS_GRADLE_PROJECT -eq 1 ]; then
-	git config user.email ci@hibernate.org
-	git config user.name Hibernate-CI
-
-	EXTRA_ARGS=""
-	if [ "$DRY_RUN" == "true" ]; then
-		EXTRA_ARGS=" --dry-run"
-	fi
-
-	if [ ! -f "./jreleaser.yml" ] && [ "$USE_JRELEASER_RELEASE" == "false" ]; then
-	 EXTRA_ARGS+=" closeAndReleaseSonatypeStagingRepository"
-	fi
-	runJReleaser
-
-	./gradlew releasePerform -x test \
-					--no-scan --no-daemon --no-build-cache --stacktrace $EXTRA_ARGS \
-					-PreleaseVersion=$RELEASE_VERSION -PdevelopmentVersion=$DEVELOPMENT_VERSION \
-					-PdocPublishBranch=production -PgitRemote=origin -PgitBranch=$BRANCH
-else
-	EXTRA_ARGS=""
-	if [ "$USE_JRELEASER_RELEASE" == "true" ]; then
-		EXTRA_ARGS="-j"
-	fi
-	bash -xe "$SCRIPTS_DIR/deploy.sh" "$EXTRA_ARGS" "$PROJECT"
-	runJReleaser
-
-	if [[ "$PROJECT" != "tools" && "$PROJECT" != "hcann" && "$PROJECT" != "localcache" &&  ! $PROJECT =~ ^infra-.+ ]]; then
-		exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
-	fi
-fi
-
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
-
-if [ $IS_GRADLE_PROJECT -eq 0 ]; then
-	bash -xe "$SCRIPTS_DIR/update-version.sh" "$PROJECT" "$DEVELOPMENT_VERSION"
-	bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"
+uploadArtifactsToCentralAndPublishToGitHub
+DEPLOYMENT_ID=$(currentDeploymentId)
+exec_or_dry_run bash -xe "$SCRIPTS_DIR/deploy-gradle-plugin.sh" "$PROJECT"
+if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
+  exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
 fi
+
+exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing next development iteration" "$PROJECT" "$DEVELOPMENT_VERSION"
+exec_or_dry_run bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"
+
+publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
 
 popd

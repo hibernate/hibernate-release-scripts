@@ -26,6 +26,7 @@ function exec_or_dry_run() {
 PUSH_CHANGES=true
 # Default to a well-known CI environment variable
 BRANCH="$BRANCH_NAME"
+NOTES_FILE="-"
 
 while getopts 'djhb:' opt; do
   case "$opt" in
@@ -47,6 +48,11 @@ while getopts 'djhb:' opt; do
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
     }
+    ;;
+  notes)
+    needs_arg
+    NOTES_FILE="$OPTARG"
+    echo "Using external notes-file : $notesFile"
     ;;
   \?)
     usage
@@ -143,4 +149,4 @@ bash -xe "$SCRIPTS_DIR/prepare-release.sh" $ADDITIONAL_OPTIONS -b "$BRANCH" -v "
 
 #bash -xe "$SCRIPTS_DIR/jira-release.sh" $ADDITIONAL_OPTIONS "$JIRA_PROJECT" "$RELEASE_VERSION_BASIS" "$NEXT_VERSION_BASIS"
 
-bash -xe "$SCRIPTS_DIR/publish.sh" $ADDITIONAL_OPTIONS "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION" "$BRANCH"
+bash -xe "$SCRIPTS_DIR/publish.sh" --notes="$NOTES_FILE" $ADDITIONAL_OPTIONS "$PROJECT" "$RELEASE_VERSION" "$DEVELOPMENT_VERSION" "$BRANCH"

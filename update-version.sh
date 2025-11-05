@@ -1,5 +1,21 @@
 #!/usr/bin/env -S bash -e
 
+MESSAGE=""
+
+while getopts 'm:' opt; do
+  case "$opt" in
+  m)
+    MESSAGE="$OPTARG"
+    ;;
+  \?)
+    usage
+    exit 1
+    ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
 SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
 
 PROJECT=$1
@@ -12,12 +28,16 @@ if [ -z "$PROJECT" ]; then
 	echo "ERROR: Project not supplied"
 	exit 1
 fi
+if [ -z "$MESSAGE" ]; then
+	echo "ERROR: Commit message was not supplied"
+	exit 1
+fi
 if [ -z "$NEW_VERSION" ]; then
 	echo "ERROR: New version argument not supplied"
 	exit 1
-else
-	echo "Setting version to '$NEW_VERSION'";
 fi
+
+echo "Setting version to '$NEW_VERSION'";
 
 pushd $WORKSPACE
 
@@ -25,7 +45,8 @@ if [ -f "./gradlew" ]; then
 	# Gradle-based build
 	if [ -f "./gradle/version.properties" ]; then
   	# ORM/Reactive custom version location:
-  	echo "hibernateVersion=$NEW_VERSION" > ./gradle/version.properties
+  	sed -i "s/^projectVersion=.*$/projectVersion=$NEW_VERSION/g" ./gradle/version.properties
+  	sed -i "s/^hibernateVersion=.*$/hibernateVersion=$NEW_VERSION/g" ./gradle/version.properties
   else
     # More standard location for other gradle-based projects:
     sed -i "s/^version=.*$/version=$NEW_VERSION/g" gradle.properties
@@ -44,5 +65,7 @@ else
 			./mvnw -Prelocation -N versions:update-child-modules -DgenerateBackupPoms=false
 	fi
 fi
+
+git commit -a -m "$MESSAGE"
 
 popd

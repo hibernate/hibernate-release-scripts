@@ -18,15 +18,11 @@ if [ -z "$BRANCH" ]; then
 	 exit 1
 fi
 
-git commit -a -m "[Jenkins release job] Preparing next development iteration"
-
 if [ "$PUSH_CHANGES" = true ] ; then
 	echo "Pushing changes to the upstream repository."
 	# Make sure to use the HEAD:<target> syntax,
 	# because the branch may not be checked out (we may be in "detached head" state)
 	git push origin HEAD:$BRANCH
-	# Here, on the other hand, we're just pushing a tag, and we know the tag is present locally
-	git push origin $RELEASE_VERSION
 fi
 if [ "$PUSH_CHANGES" != true ] ; then
 	echo "WARNING: Not pushing changes to the upstream repository."
