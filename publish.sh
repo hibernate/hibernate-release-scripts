@@ -296,6 +296,6 @@ fi
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing next development iteration" "$PROJECT" "$DEVELOPMENT_VERSION"
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"
 
-publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
+exec_or_dry_run publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
 
 popd
