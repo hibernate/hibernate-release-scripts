@@ -223,7 +223,8 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
 				--basedir $(realpath $WORKSPACE) \
-				-PreleaseVersionFamily="$RELEASE_VERSION_FAMILY" -PreleaseVersion="$RELEASE_VERSION" -PnotesContent="$NOTES_CONTENT" -PtagName="$TAG_NAME" -PcurrentBranch="$BRANCH"
+				-PreleaseVersionFamily="$RELEASE_VERSION_FAMILY" -PreleaseVersion="$RELEASE_VERSION"  \
+				-PnotesContent="$NOTES_CONTENT" -PtagName="$TAG_NAME" -PcurrentBranch="$BRANCH" -PisDryRun="$JRELEASER_DRY_RUN"
 	else
 	  echo "Release cannot complete without a JReleaser configuration."
 	  exit 1

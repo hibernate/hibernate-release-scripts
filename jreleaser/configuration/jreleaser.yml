@@ -38,7 +38,7 @@ hooks:
       #  before JReleaser creates the changelog and tags.
       - continueOnError: false
         # This condition prevents the hook from running if we haven't passed the branch to it:
-        condition: '"{{ currentBranch }}" != "" && "$JRELEASER_DRY_RUN" != true'
+        condition: '"{{ currentBranch }}" != "" && "{{ isDryRun }}" != true'
         verbose: true
         shell: SH
         run: 'git push origin HEAD:{{currentBranch}}'
