@@ -101,9 +101,7 @@ for (( i=1; i<=$MAX_ATTEMPTS; i++ ))
 do
   echo "Attempt $i of $MAX_ATTEMPTS: Pushing changes..."
 
-  exec_or_dry_run git push origin HEAD:production
-
-  if [ $? -eq 0 ]; then
+  if exec_or_dry_run git push origin HEAD:production; then
     echo "Git push successful!"
     exit 0
   fi
@@ -113,9 +111,8 @@ do
 
   if [ $i -lt $MAX_ATTEMPTS ]; then
     echo "Rebasing and will try again..."
-    exec_or_dry_run git pull --rebase origin production
 
-    if [ $? -ne 0 ]; then
+    if ! exec_or_dry_run git pull --rebase origin production; then
       echo "Rebase failed. Something is totally wrong here. Failing the build..."
       exit 1
     fi
