@@ -80,7 +80,7 @@ fi
 function jira_version() {
   # REST URL used to retrieve all release versions of the project - https://docs.atlassian.com/jira/REST/latest/#d2e4023
   jira_versions_url="https://hibernate.atlassian.net/rest/api/latest/project/${JIRA_KEY}/versions"
-  curl "$jira_versions_url" | jq ".[] | select(.name | . == \"${JIRA_FIX_VERSION_LABEL}\")"
+  curl --retry 5 --fail --retry-all-errors "$jira_versions_url" | jq ".[] | select(.name | . == \"${JIRA_FIX_VERSION_LABEL}\")"
 }
 
 #######################################################################################################################
@@ -93,7 +93,7 @@ function list_jira_issues() {
   # REST URL used for getting all issues of given release - see https://docs.atlassian.com/jira/REST/latest/#d2e2450
   jira_issues_url="https://hibernate.atlassian.net/rest/api/3/search/jql/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${JIRA_FIX_VERSION_LABEL}${1}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200${token_param}"
 
-  curl "$jira_issues_url"
+  curl --retry 5 --fail --retry-all-errors "$jira_issues_url"
 }
 
 #######################################################################################################################

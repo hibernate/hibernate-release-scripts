@@ -16,7 +16,7 @@ if [ -z "$JIRA_VERSION" ]; then
 	exit 1
 fi
 
-JSON_RESPONSE=$(curl -sL "https://hibernate.atlassian.net/rest/api/2/project/${JIRA_KEY}/version?status=unreleased")
+JSON_RESPONSE=$(curl --retry 5 --fail --retry-all-errors -sL "https://hibernate.atlassian.net/rest/api/2/project/${JIRA_KEY}/version?status=unreleased")
 JIRA_VERSION_ID=$(echo "$JSON_RESPONSE" | sed -E "s/^.+,\"id\":\"([0-9]+)\",\"name\":\"${JIRA_VERSION//./\.}\".*/\1/")
 
 if [ -z "$JIRA_VERSION_ID" ]; then
