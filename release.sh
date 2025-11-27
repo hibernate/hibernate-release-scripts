@@ -17,6 +17,8 @@ function usage() {
   echo "    -d            Dry run; do not push, deploy or publish anything."
 }
 
+function needs_arg() { if [ -z "$OPTARG" ]; then die "No arg for --$opt option"; fi; }
+
 #--------------------------------------------
 # Option parsing
 
@@ -28,7 +30,16 @@ PUSH_CHANGES=true
 BRANCH="$BRANCH_NAME"
 NOTES_FILE="-"
 
-while getopts 'djhb:' opt; do
+while getopts 'djhb:-:' opt; do
+  if [ "$opt" = "-" ]; then
+    # long option: reformulate opt and OPTARG
+    #     - extract long option name
+    opt="${OPTARG%%=*}"
+    #     - extract long option argument (may be empty)
+    OPTARG="${OPTARG#"$opt"}"
+    #     - remove assigning `=`
+    OPTARG="${OPTARG#=}"
+  fi
   case "$opt" in
   b)
     BRANCH="$OPTARG"
