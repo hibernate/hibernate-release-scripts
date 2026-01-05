@@ -82,13 +82,6 @@ if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "search" ] || [ "$PROJECT" == "val
 fi
 "$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
 
-if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
-		# These projects do not have a distribution bundle archive,
-		#    hence we do not want to check the sourceforge availability as we will not be uploading anything.
-		# There is also no version in the readme and no changelog file.
-		"$SCRIPTS_DIR/check-sourceforge-availability.sh"
-fi
-
 "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing release $RELEASE_VERSION" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
 
 if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
