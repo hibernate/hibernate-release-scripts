@@ -37,7 +37,7 @@ else
   # none of the "new" docs locations are available, let's check for the dist archive and try to unpack it:
   DIST=distribution/target/dist/hibernate-$PROJECT-$RELEASE_VERSION-dist.zip
   if [ ! -f $DIST ]; then
-    # Legacy layout; see upload-distribution.sh
+    # Legacy layout;
     DIST=distribution/target/hibernate-$PROJECT-$RELEASE_VERSION-dist.zip
   fi
   if [ -f $DIST ]; then

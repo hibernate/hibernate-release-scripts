@@ -290,9 +290,6 @@ exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$REL
 uploadArtifactsToCentralAndPublishToGitHub
 DEPLOYMENT_ID=$(currentDeploymentId)
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/deploy-gradle-plugin.sh" "$PROJECT"
-if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
-  exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-distribution.sh" "$PROJECT" "$RELEASE_VERSION"
-fi
 
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing next development iteration" "$PROJECT" "$DEVELOPMENT_VERSION"
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"
