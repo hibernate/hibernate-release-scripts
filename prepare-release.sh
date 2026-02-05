@@ -84,7 +84,7 @@ fi
 
 "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing release $RELEASE_VERSION" $PROJECT $RELEASE_VERSION $INHERITED_VERSION
 
-if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+if [ -f "./gradlew" ]; then
 	RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
 	RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
