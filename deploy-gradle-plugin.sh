@@ -12,7 +12,7 @@ if [ -z "$PROJECT" ]; then
 	exit 1
 fi
 
-if [ "$PROJECT" == "orm" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "infra-gradle-plugin" ]; then
   ./gradlew releaseGradlePluginPerform
 fi
 
