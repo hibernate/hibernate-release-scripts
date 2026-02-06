@@ -158,6 +158,8 @@ function determineJReleaserConfigFile() {
     # Reactive and Models are using a different "target" directory, hence, a different JReleaser config:
     if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
       CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_alternative.yml"
+    elif [ "$PROJECT" == "infra-gradle-plugin" ]; then
+      CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_no_central.yml"
     else
       CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser.yml"
     fi

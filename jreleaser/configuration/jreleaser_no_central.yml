@@ -1,6 +1,5 @@
-# This configuration is used for publishing to Maven Central in two steps release:
-#  - first: just upload the deployment to Maven Central.
-#  - second: publish the deployment uploaded in the previous step.
+# This configuration only creates a GitHub release
+#  and does not publish anything to Maven Central.
 release:
   github:
     skipTag: false
@@ -22,16 +21,6 @@ signing:
   active: RELEASE
   armored: true
 
-deploy:
-  maven:
-    mavenCentral:
-      maven-central:
-        active: RELEASE
-        url: https://central.sonatype.com/api/v1/publisher
-        snapshotSupported: false
-        applyMavenCentralRules: true
-        stagingRepositories:
-          - target/staging-deploy/maven
 hooks:
   script:
     before:
