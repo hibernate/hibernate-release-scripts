@@ -47,6 +47,8 @@ if [ -f "./gradlew" ]; then
   	# ORM/Reactive custom version location:
   	sed -i "s/^projectVersion=.*$/projectVersion=$NEW_VERSION/g" ./gradle/version.properties
   	sed -i "s/^hibernateVersion=.*$/hibernateVersion=$NEW_VERSION/g" ./gradle/version.properties
+  elif [ -f "version.txt" ]; then
+    echo $NEW_VERSION > version.txt
   else
     # More standard location for other gradle-based projects:
     sed -i "s/^version=.*$/version=$NEW_VERSION/g" gradle.properties
