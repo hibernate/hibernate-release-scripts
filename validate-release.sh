@@ -54,9 +54,11 @@ fi
 
 git fetch origin $TAG_NAME || true
 
-if [ `git tag -l | grep $TAG_NAME` ]
+FOUND_TAGS=$(git tag -l | grep -P "^\\Q$TAG_NAME\\E$")
+if [ -n "$FOUND_TAGS" ]
 then
 	echo "ERROR: tag '$TAG_NAME' already exists, aborting. If you really want to release this version, delete the tag in the workspace first."
+	echo "ERROR: found the following tags: $FOUND_TAGS"
 	exit 1
 else
 	echo "SUCCESS: tag '$TAG_NAME' does not exist"
