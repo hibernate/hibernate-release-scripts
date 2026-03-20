@@ -52,9 +52,10 @@ else
   TAG_NAME=$RELEASE_VERSION
 fi
 
-git fetch origin $TAG_NAME || true
+echo "Looking up the tag $TAG_NAME on the remote..."
+FOUND_TAGS=$(git ls-remote --tags origin "refs/tags/$TAG_NAME")
+echo "Finished looking up the tag... "
 
-FOUND_TAGS=$(git tag -l | grep -P "^\\Q$TAG_NAME\\E$")
 if [ -n "$FOUND_TAGS" ]
 then
 	echo "ERROR: tag '$TAG_NAME' already exists, aborting. If you really want to release this version, delete the tag in the workspace first."
