@@ -91,7 +91,7 @@ function list_jira_issues() {
       next_token="&nextPageToken=$2"
   fi
   # REST URL used for getting all issues of given release - see https://docs.atlassian.com/jira/REST/latest/#d2e2450
-  jira_issues_url="https://hibernate.atlassian.net/rest/api/3/search/jql/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${JIRA_FIX_VERSION_LABEL}${1}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200${token_param}"
+  jira_issues_url="https://hibernate.atlassian.net/rest/api/3/search/jql/?jql=project%20%3D%20${JIRA_KEY}%20AND%20fixVersion%20%3D%20${JIRA_FIX_VERSION_LABEL}${1}%20ORDER%20BY%20issuetype%20ASC&fields=issuetype,summary&maxResults=200${next_token}"
 
   curl --retry 5 --fail --retry-all-errors "$jira_issues_url"
 }
