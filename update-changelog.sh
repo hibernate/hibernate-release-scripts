@@ -153,12 +153,6 @@ if [ -z "$JIRA_VERSION" ]; then
   echo "ERROR: Version $JIRA_FIX_VERSION_LABEL does not exist in JIRA"
   exit 1
 fi
-if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
-  if [ "true" != "$(echo "$JIRA_VERSION" | jq '.released' )" ]; then
-    echo "ERROR: Version $JIRA_FIX_VERSION_LABEL is not yet released in JIRA"
-    exit 1
-  fi
-fi
 NON_FIXED="$(list_jira_issues "%20AND%20(resolution%20IS%20EMPTY%20OR%20resolution%20!%3D%20Fixed)" | jq -r '.issues[] | (.key)')"
 if [ -n "$NON_FIXED" ]; then
   echo -e "ERROR: Version $JIRA_FIX_VERSION_LABEL has issues that are not marked as 'Fixed' in JIRA:\n$NON_FIXED"
