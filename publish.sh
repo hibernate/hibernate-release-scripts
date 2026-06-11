@@ -96,6 +96,12 @@ if [ -z "$DEVELOPMENT_VERSION" ]; then
 	exit 1
 fi
 
+# Here 0 == false and 1 == true:
+REQUIRES_PUBLISHING_TO_MAVEN_CENTRAL=1
+if [ "$PROJECT" == "infra-gradle-plugin" ]; then
+  REQUIRES_PUBLISHING_TO_MAVEN_CENTRAL=0
+fi
+
 #--------------------------------------------
 # Environment variables
 
@@ -296,6 +302,8 @@ exec_or_dry_run bash -xe "$SCRIPTS_DIR/deploy-gradle-plugin.sh" "$PROJECT"
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing next development iteration" "$PROJECT" "$DEVELOPMENT_VERSION"
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"
 
-exec_or_dry_run publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
+if [ $REQUIRES_PUBLISHING_TO_MAVEN_CENTRAL -eq 1 ]; then
+  exec_or_dry_run publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
+fi
 
 popd
