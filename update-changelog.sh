@@ -1,7 +1,8 @@
 #!/usr/bin/env -S bash -e
 
 ########################################################################################################################
-# The purpose of this tool is to update the changelog.txt using JIRA's REST API to get the required information
+# The purpose of this tool is to update the changelog using JIRA's REST API to get the required information.
+# Supports both plain text (changelog.txt) and Markdown (changelog.md) formats.
 ########################################################################################################################
 
 PROJECT=$1
@@ -97,20 +98,18 @@ function list_jira_issues() {
 }
 
 #######################################################################################################################
-# Creates the required update for changelog.txt. It creates the following:
+# Creates the required changelog update in plain text format:
 #
 # <version> (<date>)
 # -------------------------
 #
 # ** <issue-type-1>
-#    * PROJECT-<key> - <summary>
+#    * PROJECT-<key> <summary>
 #    ...
-#
 # ** <issue-type-2>
-#    * PROJECT-<key> - <summary>
+#    * PROJECT-<key> <summary>
 #    ...
-#
-function create_changelog_update() {
+function create_changelog_update_txt() {
   local ID=$1
   if [ "$PROJECT" == "orm" ]; then
     echo "Changes in $RELEASE_VERSION ($(date +'%B %d, %Y'))"
@@ -144,6 +143,59 @@ function create_changelog_update() {
   echo ""
 }
 
+#######################################################################################################################
+# Creates the required changelog update in Markdown format:
+#
+# ## <version> (<date>)
+#
+# [Full changelog](<jira-link>)
+#
+# ### <issue-type-1>
+# * [PROJECT-<key>](<browse-link>) - <summary>
+# ...
+#
+function create_changelog_update_md() {
+  local ID=$1
+  if [ "$PROJECT" == "orm" ]; then
+    echo "## $RELEASE_VERSION ($(date +'%B %d, %Y'))"
+  else
+    echo "## $RELEASE_VERSION ($(date +%Y-%m-%d))"
+  fi
+  echo ""
+  echo "[Full changelog](https://hibernate.atlassian.net/projects/${JIRA_KEY}/versions/$ID)"
+  echo ""
+  local previous_issuetype=""
+  while true; do
+    JSON_RESPONSE=$(list_jira_issues "" "${NEXT_PAGE_TOKEN}")
+    NEXT_PAGE_TOKEN=$(echo "${JSON_RESPONSE}" | jq -r '.nextPageToken //""')
+
+    echo $JSON_RESPONSE | jq -r '.issues[] | (.fields.issuetype.name + "\t" + .key + "\t" + .fields.summary)' |
+      while IFS=$'\t' read -r issuetype key summary; do
+        if [ "$previous_issuetype" != "$issuetype" ]; then
+          previous_issuetype="$issuetype"
+          echo ""
+          echo "### $issuetype"
+        fi
+        echo "* [${key}](https://hibernate.atlassian.net/browse/${key}) - $summary"
+      done
+    if [[ -z "${NEXT_PAGE_TOKEN}" ]]; then
+      break
+    fi
+  done
+
+  echo ""
+}
+
+#######################################################################################################################
+# Dispatches to the appropriate format based on the changelog file extension.
+function create_changelog_update() {
+  if [[ "$CHANGELOG" == *.md ]]; then
+    create_changelog_update_md "$@"
+  else
+    create_changelog_update_txt "$@"
+  fi
+}
+
 ########################################################################################################################
 # Putting it all together
 ########################################################################################################################
@@ -164,6 +216,17 @@ JIRA_VERSION_ID="$(echo $JIRA_VERSION | jq -r ".id")"
 changelog_update_file="$(mktemp)"
 trap "rm -f $changelog_update_file" EXIT
 create_changelog_update $JIRA_VERSION_ID > "$changelog_update_file"
-sed -i "3r$changelog_update_file" "$CHANGELOG"
+
+if [[ "$CHANGELOG" == *.md ]]; then
+  # For Markdown changelogs, insert after the title line (# Changelog) and blank line
+  INSERT_LINE=$(grep -n '^# ' "$CHANGELOG" | head -1 | cut -d: -f1)
+  if [ -n "$INSERT_LINE" ]; then
+    sed -i "$((INSERT_LINE + 1))r$changelog_update_file" "$CHANGELOG"
+  else
+    sed -i "1r$changelog_update_file" "$CHANGELOG"
+  fi
+else
+  sed -i "3r$changelog_update_file" "$CHANGELOG"
+fi
 git add "$CHANGELOG"
-git commit -m "[Jenkins release job] changelog.txt updated by release build ${RELEASE_VERSION}"
+git commit -m "[Jenkins release job] $(basename "$CHANGELOG") updated by release build ${RELEASE_VERSION}"

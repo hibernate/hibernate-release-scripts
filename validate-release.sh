@@ -3,7 +3,11 @@
 PROJECT=$1
 RELEASE_VERSION=$2
 WORKSPACE=${WORKSPACE:-'.'}
-CHANGELOG=$WORKSPACE/changelog.txt
+if [ -f "$WORKSPACE/changelog.md" ]; then
+  CHANGELOG=$WORKSPACE/changelog.md
+else
+  CHANGELOG=$WORKSPACE/changelog.txt
+fi
 README=$WORKSPACE/README.md
 
 pushd ${WORKSPACE}

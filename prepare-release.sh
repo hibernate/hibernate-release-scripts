@@ -78,7 +78,12 @@ if [ -f "$WORKSPACE/README.md" ]; then
   "$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
 fi
 if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
-  "$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/changelog.txt"
+  if [ -f "$WORKSPACE/changelog.md" ]; then
+    CHANGELOG_FILE="$WORKSPACE/changelog.md"
+  else
+    CHANGELOG_FILE="$WORKSPACE/changelog.txt"
+  fi
+  "$SCRIPTS_DIR/update-changelog.sh" $PROJECT $RELEASE_VERSION "$CHANGELOG_FILE"
 fi
 "$SCRIPTS_DIR/validate-release.sh" $PROJECT $RELEASE_VERSION
 
