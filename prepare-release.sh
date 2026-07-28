@@ -77,7 +77,7 @@ git fetch --tags
 if [ -f "$WORKSPACE/README.md" ]; then
   "$SCRIPTS_DIR/update-readme.sh" $PROJECT $RELEASE_VERSION "$WORKSPACE/README.md"
 fi
-if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ]; then
   if [ -f "$WORKSPACE/changelog.md" ]; then
     CHANGELOG_FILE="$WORKSPACE/changelog.md"
   else
@@ -129,7 +129,7 @@ if [ -z $(find "$STAGING_ROOT_DIRECTORY/maven" -mindepth 1 -print -quit) ]; then
   exit 1
 fi
 
-if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "search" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "search" ]; then
   if [ -z $(find "$STAGING_ROOT_DIRECTORY/documentation" -mindepth 1 -print -quit) ]; then
     echo "$PROJECT documentation is missing from the staging directory. Aborting the release!"
     exit 1

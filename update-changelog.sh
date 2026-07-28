@@ -36,6 +36,9 @@ case "$PROJECT" in
   'orm')
       JIRA_KEY="HHH"
       ;;
+  'nosql')
+      JIRA_KEY="HNSQL"
+      ;;
   'ogm')
     JIRA_KEY="OGM"
     ;;
@@ -46,7 +49,7 @@ case "$PROJECT" in
 esac
 
 STRIPPED_SUFFIX_FOR_TAG=""
-if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ]; then
   STRIPPED_SUFFIX_FOR_TAG=".Final"
 fi
 

@@ -5,7 +5,7 @@ function usage() {
   echo
   echo "  $0 [options] <project> <release_version> <development_version>"
   echo
-  echo "    <project>                One of [search,validator,ogm,orm,reactive,tools,hcann,localcache,infra-*]]"
+  echo "    <project>                One of [search,validator,ogm,orm,nosql,reactive,tools,hcann,localcache,infra-*]]"
   echo "    <release_version>        The version to release (e.g. 6.0.1.Final)"
   echo "    <development_version>    The new version after the release (e.g. 6.0.2-SNAPSHOT)"
   echo
@@ -129,6 +129,8 @@ elif [ "$PROJECT" == "ogm" ]; then
   JIRA_PROJECT="OGM"
 elif [ "$PROJECT" == "orm" ]; then
   JIRA_PROJECT="HHH"
+elif [ "$PROJECT" == "nosql" ]; then
+  JIRA_PROJECT="HNSQL"
 elif [ "$PROJECT" == "reactive" ]; then
   JIRA_PROJECT="HREACT"
 elif [ "$PROJECT" == "tools" ]; then

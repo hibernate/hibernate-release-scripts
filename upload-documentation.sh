@@ -65,6 +65,11 @@ elif [ "$PROJECT" == "orm" ]; then
 	META_KEYWORDS="hibernate, orm, hibernate orm, database, db, jpa, sql"
 	REQUIRES_OUTDATED_CONTENT_UPDATE=1
 	REQUIRES_DOCUMENTATION=1
+elif [ "$PROJECT" == "nosql" ]; then
+	META_DESCRIPTION="Hibernate NoSQL, Hibernate ORM extensions for NoSQL datastores - Reference Documentation"
+	META_KEYWORDS="hibernate, nosql, hibernate nosql, jpa, neo4j, milvus"
+	REQUIRES_OUTDATED_CONTENT_UPDATE=1
+	REQUIRES_DOCUMENTATION=1
 elif [ "$PROJECT" == "reactive" ]; then
 	META_DESCRIPTION="Hibernate Reactive, reactive API for Hibernate ORM - Reference Documentation"
 	META_KEYWORDS="hibernate, reactive, hibernate reactive, database, db, vert.x"

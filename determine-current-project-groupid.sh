@@ -24,6 +24,8 @@ elif [ "$PROJECT" == "reactive" ]; then
 	echo "org.hibernate.reactive"
 elif [ "$PROJECT" == "models" ]; then
 	echo "org.hibernate.models"
+elif [ "$PROJECT" == "nosql" ]; then
+	echo "org.hibernate.nosql"
 elif [ "$PROJECT" == "infra-gradle-plugin" ]; then
 	echo "org.hibernate.build.gradle"
 elif [ -f './gradlew' ]; then

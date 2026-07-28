@@ -6,7 +6,7 @@ function usage() {
   echo
   echo "  $0 [options] <project> <release_version>"
   echo
-  echo "    <project>                One of [search,validator,ogm,orm,reactive]"
+  echo "    <project>                One of [search,validator,ogm,orm,nosql,reactive]"
   echo "    <release_version>        The version to release (e.g. 6.0.1)"
   echo
   echo "  Options"
@@ -68,6 +68,8 @@ elif [ "$PROJECT" == "ogm" ]; then
   PROJECT_MESSAGE_PREFIX='[OGM] '
 elif [ "$PROJECT" == "orm" ]; then
   PROJECT_MESSAGE_PREFIX='[ORM] '
+elif [ "$PROJECT" == "nosql" ]; then
+  PROJECT_MESSAGE_PREFIX='[HNSQL] '
 elif [ "$PROJECT" == "tools" ]; then
   PROJECT_MESSAGE_PREFIX='[HBX] '
 elif [ "$PROJECT" == "reactive" ]; then

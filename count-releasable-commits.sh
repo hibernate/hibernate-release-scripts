@@ -9,7 +9,7 @@ function usage() {
   log
   log "  $0 <project>"
   log
-  log "    <project>                One of [search,validator,ogm,orm,reactive]"
+  log "    <project>                One of [search,validator,ogm,orm,nosql,reactive]"
 }
 
 SCRIPTS_DIR="$(readlink -f ${BASH_SOURCE[0]} | xargs dirname)"
@@ -25,6 +25,8 @@ elif [ "$PROJECT" == "ogm" ]; then
   MESSAGE_PATTERN='^OGM-|^\[OGM-'
 elif [ "$PROJECT" == "orm" ]; then
   MESSAGE_PATTERN='^HHH-|^\[HHH-'
+elif [ "$PROJECT" == "nosql" ]; then
+  MESSAGE_PATTERN='^HNSQL-|^\[HNSQL-'
 elif [ "$PROJECT" == "tools" ]; then
   MESSAGE_PATTERN='^HBX-|^\[HBX-'
 elif [ "$PROJECT" == "reactive" ]; then

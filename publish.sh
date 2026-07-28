@@ -5,7 +5,7 @@ function usage() {
   echo
   echo "  $0 [options] <project> <release_version> <development_version> <branch>"
   echo
-  echo "    <project>                One of [search,validator,ogm,orm,reactive,tools,hcann,localcache,infra-*]"
+  echo "    <project>                One of [search,validator,ogm,orm,nosql,reactive,tools,hcann,localcache,infra-*]"
   echo "    <release_version>        The version to release (e.g. 6.0.1.Final)"
   echo "    <development_version>    The new version after the release (e.g. 6.0.2-SNAPSHOT)"
   echo "    <branch>                 The branch we want to release"
@@ -197,7 +197,7 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
     fi
 
     local STRIPPED_SUFFIX_FOR_TAG=""
-    if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "reactive" ]; then
+    if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ]; then
       STRIPPED_SUFFIX_FOR_TAG=".Final"
     fi
 

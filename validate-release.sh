@@ -31,6 +31,8 @@ elif [ "$PROJECT" == "ogm" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "orm" ]; then
   STRIPPED_SUFFIX_FOR_TAG=".Final"
+elif [ "$PROJECT" == "nosql" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=".Final"
 elif [ "$PROJECT" == "reactive" ]; then
   STRIPPED_SUFFIX_FOR_TAG=".Final"
 elif [ "$PROJECT" == "hcann" ]; then
@@ -70,7 +72,7 @@ else
 fi
 
 # ORM does this as part of its prepare Gradle task
-if [ "$PROJECT" != "orm" ] && [ "$PROJECT" != "reactive" ]; then
+if [ "$PROJECT" != "orm" ] && [ "$PROJECT" != "nosql" ] && [ "$PROJECT" != "reactive" ]; then
 	# Only check README updates if it's actually possible that it contains things to update
 	if grep -Eq "^\*?Version: .*\*?$|<version>" $README
 	then
