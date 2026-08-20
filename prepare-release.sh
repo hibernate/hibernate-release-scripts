@@ -118,7 +118,7 @@ fi
 # Let's check that there are any artifacts in the [staging-dir]/maven and some documentation in [staging-dir]/documentation
 # See the "jreleaser/configuration" directory for the staging directories used by different projects:
 STAGING_ROOT_DIRECTORY=""
-if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ] || [ "$PROJECT" == "accessor" ]; then
     STAGING_ROOT_DIRECTORY="build/staging-deploy"
 else
     STAGING_ROOT_DIRECTORY="target/staging-deploy"

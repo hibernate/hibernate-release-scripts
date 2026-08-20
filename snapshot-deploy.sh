@@ -23,7 +23,7 @@ fi
 
 if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "tools" ] || [ "$PROJECT" == "localcache" ] || [[ $PROJECT =~ ^infra-.+ ]]; then
   ./mvnw -Pci-build -DskipTests clean deploy
-elif [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+elif [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ] || [ "$PROJECT" == "accessor" ]; then
   ./gradlew clean publishAllPublicationsToSnapshotsRepository -x test --no-scan --no-daemon --no-build-cache --stacktrace
 else
   echo "ERROR: Unknown project name $PROJECT"

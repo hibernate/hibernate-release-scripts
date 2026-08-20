@@ -155,8 +155,8 @@ function determineJReleaserConfigFile() {
     BRANCH_NAME=$BRANCH
     log "Current branch is: $BRANCH_NAME"
 
-    # Reactive and Models are using a different "target" directory, hence, a different JReleaser config:
-    if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ]; then
+    # Reactive, Models and Accessor are using a different "target" directory, hence, a different JReleaser config:
+    if [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ] || [ "$PROJECT" == "accessor" ]; then
       CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_alternative.yml"
     elif [ "$PROJECT" == "infra-gradle-plugin" ]; then
       CONFIG_FILE="$SCRIPTS_DIR/jreleaser/configuration/jreleaser_no_central.yml"
