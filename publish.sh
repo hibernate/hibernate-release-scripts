@@ -212,6 +212,22 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
       TAG_NAME=$RELEASE_VERSION
     fi
 
+    # Determine the previous release tag so that JReleaser generates the changelog
+    #  only for the commits between the two tags (instead of all commits from HEAD).
+    local PREVIOUS_TAG_NAME=""
+    if [ -n "$TAG_NAME" ]; then
+      PREVIOUS_TAG_NAME=$(git tag --merged HEAD \
+        | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(\.[A-Za-z][A-Za-z0-9]*)*$' \
+        | sort -V \
+        | awk -v v="$TAG_NAME" '$0 < v' \
+        | tail -n 1)
+    fi
+    if [ -z "$PREVIOUS_TAG_NAME" ]; then
+      log "WARNING: could not determine the previous release tag for $TAG_NAME; the changelog might include all commits from HEAD."
+    else
+      log "Previous release tag determined as: $PREVIOUS_TAG_NAME"
+    fi
+
     # we print the template into a "known" location" so that the
     # other "main" template can reference it and so that we could use properties in the release notes as well:
     #
@@ -226,7 +242,8 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
 				--config-file $CONFIG_FILE \
 				--basedir $(realpath $WORKSPACE) \
 				-PreleaseVersionFamily="$RELEASE_VERSION_FAMILY" -PreleaseVersion="$RELEASE_VERSION"  \
-				-PnotesContent="$NOTES_CONTENT" -PtagName="$TAG_NAME" -PcurrentBranch="$BRANCH" -PisDryRun="$JRELEASER_DRY_RUN"
+				-PnotesContent="$NOTES_CONTENT" -PtagName="$TAG_NAME" -PpreviousTagName="$PREVIOUS_TAG_NAME" \
+				-PcurrentBranch="$BRANCH" -PisDryRun="$JRELEASER_DRY_RUN"
 	else
 	  echo "Release cannot complete without a JReleaser configuration."
 	  exit 1
