@@ -37,6 +37,6 @@ hooks:
         condition: '"{{ currentBranch }}" != "" && "{{ isDryRun }}" != true'
         verbose: true
         shell: SH
-        run: 'git push origin HEAD:{{currentBranch}}'
+        run: 'git push --atomic --follow-tags origin HEAD:{{currentBranch}}'
         filter:
           includes: ['release']
