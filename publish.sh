@@ -202,22 +202,6 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
       NOTES_CONTENT="This release introduces a few minor improvements as well as bug fixes."
     fi
 
-    local STRIPPED_SUFFIX_FOR_TAG=""
-    if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ]; then
-      STRIPPED_SUFFIX_FOR_TAG=".Final"
-    fi
-
-    local RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
-    local RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-    local RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
-
-    local TAG_NAME=""
-    if [ -n "$STRIPPED_SUFFIX_FOR_TAG" -a "$RELEASE_SUFFIX" == "$STRIPPED_SUFFIX_FOR_TAG" ]; then
-      TAG_NAME=$RELEASE_VERSION_BASIS
-    else
-      TAG_NAME=$RELEASE_VERSION
-    fi
-
     # Determine the previous release tag so that JReleaser generates the changelog
     #  only for the commits between the two tags (instead of all commits from HEAD).
     local PREVIOUS_TAG_NAME=""
@@ -242,7 +226,7 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
 
     # Note: we add the "currentBranch" parameter so that the hook to push the changes to the remote is executed
     #  before JReleaser creates tags and GH releases:
-		JRELEASER_MAVENCENTRAL_STAGE="UPLOAD" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
+		JRELEASER_MAVENCENTRAL_STAGE="UPLOAD" JRELEASER_SKIP_TAG="true" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
@@ -311,13 +295,30 @@ git config --local user.email "ci@hibernate.org"
 
 RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')
 
+RELEASE_VERSION_BASIS=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+RELEASE_SUFFIX=$(echo "$RELEASE_VERSION" | sed -E 's/^[0-9]+\.[0-9]+\.[0-9]+(.*)/\1/')
+STRIPPED_SUFFIX_FOR_TAG=""
+if [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=".Final"
+fi
+if [ -n "$STRIPPED_SUFFIX_FOR_TAG" ] && [ "$RELEASE_SUFFIX" == "$STRIPPED_SUFFIX_FOR_TAG" ]; then
+  TAG_NAME=$RELEASE_VERSION_BASIS
+else
+  TAG_NAME=$RELEASE_VERSION
+fi
+
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
+
+# Create the release tag on the current commit, then prepare the next development version,
+# so that everything can be pushed in a single operation by the JReleaser hook.
+# JReleaser's skipTag is set because it cannot reliably tag a commit other than the branch tip
+# (see https://github.com/jreleaser/jreleaser/issues/1692).
+exec_or_dry_run git tag -a -m "Release $RELEASE_VERSION" "$TAG_NAME"
+exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing next development iteration" "$PROJECT" "$DEVELOPMENT_VERSION"
+
 uploadArtifactsToCentralAndPublishToGitHub
 DEPLOYMENT_ID=$(currentDeploymentId)
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/deploy-gradle-plugin.sh" "$PROJECT"
-
-exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release job] Preparing next development iteration" "$PROJECT" "$DEVELOPMENT_VERSION"
-exec_or_dry_run bash -xe "$SCRIPTS_DIR/push-upstream.sh" "$PROJECT" "$RELEASE_VERSION" "$BRANCH" "$PUSH_CHANGES"
 
 if [ $REQUIRES_PUBLISHING_TO_MAVEN_CENTRAL -eq 1 ]; then
   exec_or_dry_run publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
