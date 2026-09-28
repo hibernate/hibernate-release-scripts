@@ -318,7 +318,12 @@ exec_or_dry_run bash -xe "$SCRIPTS_DIR/update-version.sh" -m "[Jenkins release j
 
 uploadArtifactsToCentralAndPublishToGitHub
 DEPLOYMENT_ID=$(currentDeploymentId)
+
+# After the push, the working tree has the SNAPSHOT version.
+# Reset to the release tag so that Gradle plugin publishing sees the release version.
+exec_or_dry_run git checkout "$TAG_NAME"
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/deploy-gradle-plugin.sh" "$PROJECT"
+exec_or_dry_run git checkout "$BRANCH"
 
 if [ $REQUIRES_PUBLISHING_TO_MAVEN_CENTRAL -eq 1 ]; then
   exec_or_dry_run publishUploadedArtifactsOnCentral "$DEPLOYMENT_ID"
