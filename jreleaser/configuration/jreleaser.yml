@@ -19,6 +19,7 @@ release:
       hide:
         contributors:
           - 'Jenkins'
+          - 'GitHub'
           - 'Hibernate CI'
           - 'dependabot[bot]'
 
