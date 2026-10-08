@@ -30,6 +30,8 @@ elif [ "$PROJECT" == "nosql" ]; then
 	echo "org.hibernate.nosql"
 elif [ "$PROJECT" == "infra-gradle-plugin" ]; then
 	echo "org.hibernate.build.gradle"
+elif [ "$PROJECT" == "migration-recipes" ]; then
+  echo "org.hibernate.migration"
 elif [ -f './gradlew' ]; then
 	# Gradle-based build
 	echo "ERROR: An unsupported Gradle project: $PROJECT"
