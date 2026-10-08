@@ -45,6 +45,8 @@ elif [ "$PROJECT" == "models" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
 elif [ "$PROJECT" == "accessor" ]; then
   STRIPPED_SUFFIX_FOR_TAG=""
+elif [ "$PROJECT" == "migration-recipes" ]; then
+  STRIPPED_SUFFIX_FOR_TAG=""
 else
   echo "ERROR: Unknown project name $PROJECT"
   exit 1

@@ -139,6 +139,8 @@ elif [ "$PROJECT" == "models" ]; then
   echo 'No JIRA project available'
 elif [ "$PROJECT" == "accessor" ]; then
   echo 'No JIRA project available'
+elif [ "$PROJECT" == "migration-recipes" ]; then
+  echo 'No JIRA project available'
 elif [ "$PROJECT" == "localcache" ]; then
   echo 'No JIRA project available'
 elif [[ $PROJECT =~ ^infra-.+ ]]; then
