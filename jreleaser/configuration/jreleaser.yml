@@ -3,7 +3,7 @@
 #  - second: publish the deployment uploaded in the previous step.
 release:
   github:
-    skipTag: false
+    skipTag: true
     skipRelease: false
     tagName: '{{tagName}}'
     previousTagName: '{{previousTagName}}'

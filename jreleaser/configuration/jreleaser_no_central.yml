@@ -2,7 +2,7 @@
 #  and does not publish anything to Maven Central.
 release:
   github:
-    skipTag: false
+    skipTag: true
     skipRelease: false
     tagName: '{{tagName}}'
     previousTagName: '{{previousTagName}}'
