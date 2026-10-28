@@ -4,7 +4,7 @@
 # `stagingRepositories` cannot be parameterized, hence we need to keep two versions of the file.
 release:
   github:
-    skipTag: false
+    skipTag: true
     skipRelease: false
     tagName: '{{tagName}}'
     previousTagName: '{{previousTagName}}'

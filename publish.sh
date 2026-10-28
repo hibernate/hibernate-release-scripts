@@ -226,7 +226,7 @@ function uploadArtifactsToCentralAndPublishToGitHub() {
 
     # Note: we add the "currentBranch" parameter so that the hook to push the changes to the remote is executed
     #  before JReleaser creates tags and GH releases:
-		JRELEASER_MAVENCENTRAL_STAGE="UPLOAD" JRELEASER_SKIP_TAG="true" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
+		JRELEASER_MAVENCENTRAL_STAGE="UPLOAD" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" full-release \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
@@ -255,7 +255,7 @@ function publishUploadedArtifactsOnCentral() {
     # Note that for the deploy (which should just publish the uploaded bundle on Maven Central) action
     #  we do not need to run the release-success hook, hance we don't need the `currentBranch` parameter here:
 		JRELEASER_MAVENCENTRAL_STAGE="PUBLISH" JRELEASER_DEPLOY_MAVEN_MAVENCENTRAL_DEPLOYMENT_ID="$DEPLOYMENT_ID" \
-		    JRELEASER_SKIP_TAG="true" JRELEASER_SKIP_RELEASE="true" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" deploy \
+		    JRELEASER_SKIP_RELEASE="true" "$SCRIPTS_DIR/jreleaser/bin/jreleaser" deploy \
 				-Djreleaser.project.version="$RELEASE_VERSION" \
 				-Djreleaser.project.java.group.id=$($SCRIPTS_DIR/determine-current-project-groupid.sh $PROJECT) \
 				--config-file $CONFIG_FILE \
