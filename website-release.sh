@@ -13,6 +13,7 @@ function usage() {
   echo
   echo "    -h            Show this help and exit."
   echo "    -d            Dry run; do not push, deploy or publish anything."
+  echo "    -s <file>     The series.yml of the series of the release: copy it to the website, if missing."
 }
 
 #--------------------------------------------
@@ -22,8 +23,9 @@ function exec_or_dry_run() {
   "${@}"
 }
 PUSH_CHANGES=true
+SERIES_FILE=""
 
-while getopts 'dhb:' opt; do
+while getopts 'dhb:s:' opt; do
   case "$opt" in
   h)
     usage
@@ -36,6 +38,9 @@ while getopts 'dhb:' opt; do
     function exec_or_dry_run() {
       echo "DRY RUN; would have executed:" "${@}"
     }
+    ;;
+  s)
+    SERIES_FILE="$OPTARG"
     ;;
   \?)
     usage
@@ -83,6 +88,24 @@ RELEASE_VERSION_FAMILY=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+).*
 RELEASE_FILE_DIRECTORY_NAME="./_data/projects/${PROJECT}/releases/${RELEASE_VERSION_FAMILY}"
 mkdir -p "$RELEASE_FILE_DIRECTORY_NAME"
 RELEASE_FILE_NAME="${RELEASE_FILE_DIRECTORY_NAME}/${RELEASE_VERSION}.yml"
+SERIES_FILE_NAME="${RELEASE_FILE_DIRECTORY_NAME}/series.yml"
+
+if [ -n "$SERIES_FILE" ]; then
+  if [ ! -f "$SERIES_FILE" ]; then
+    echo "ERROR: Series file $SERIES_FILE not found"
+    exit 1
+  fi
+  # Only for a new series: the file on the website can be updated by hand later
+  if [ ! -f "$SERIES_FILE_NAME" ]; then
+    cp "$SERIES_FILE" "$SERIES_FILE_NAME"
+    git add "$SERIES_FILE_NAME"
+  fi
+fi
+
+if [ ! -f "$SERIES_FILE_NAME" ]; then
+  echo "WARNING: $SERIES_FILE_NAME doesn't exist: hibernate.org will fail to build until you add it."
+fi
+
 cat >> $RELEASE_FILE_NAME <<EOF
 date: ${RELEASE_DATE}
 EOF
