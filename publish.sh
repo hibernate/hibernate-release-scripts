@@ -151,6 +151,20 @@ function log() {
   echo 1>&2 "$@"
 }
 
+function validateGradlePluginPublication() {
+  if [ "$PROJECT" != "orm" ] && [ "$PROJECT" != "infra-gradle-plugin" ]; then
+    return
+  fi
+
+  if [[ "$RELEASE_VERSION" == *-SNAPSHOT ]]; then
+    log "Skipping Gradle plugin publication validation for snapshot version $RELEASE_VERSION"
+    return
+  fi
+
+  log "Validating Gradle plugin publication for $PROJECT $RELEASE_VERSION..."
+  ./gradlew --no-scan --no-daemon --no-build-cache publishPlugins --validate-only
+}
+
 function determineJReleaserConfigFile() {
   log "Start determining JReleaser config file..."
   local CONFIG_FILE=""
@@ -306,6 +320,8 @@ if [ -n "$STRIPPED_SUFFIX_FOR_TAG" ] && [ "$RELEASE_SUFFIX" == "$STRIPPED_SUFFIX
 else
   TAG_NAME=$RELEASE_VERSION
 fi
+
+validateGradlePluginPublication
 
 exec_or_dry_run bash -xe "$SCRIPTS_DIR/upload-documentation.sh" "$PROJECT" "$RELEASE_VERSION" "$RELEASE_VERSION_FAMILY"
 
