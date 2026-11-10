@@ -106,7 +106,7 @@ else
   	./mvnw clean deploy \
   		-Pdocbook,documentation-pdf,dist,perf,relocation,release \
   		-DperformRelease=true \
-  		-DskipTests=true -Dcheckstyle.skip=true \
+  		-DskipTests=true -DskipITs -Dcheckstyle.skip=true \
   		-Dmaven.compiler.useIncrementalCompilation=false \
   		-Ddevelocity.enabled=false \
   		-Dscan=false -Dno-build-cache \
