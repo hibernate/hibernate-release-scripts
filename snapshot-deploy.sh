@@ -22,7 +22,7 @@ if ! [[ $VERSION =~ ^.+-SNAPSHOT$ ]]; then
 fi
 
 if [ "$PROJECT" == "search" ] || [ "$PROJECT" == "validator" ] || [ "$PROJECT" == "tools" ] || [ "$PROJECT" == "localcache" ] || [[ $PROJECT =~ ^infra-.+ ]]; then
-  ./mvnw -Pci-build -DskipTests clean deploy
+  ./mvnw -Pci-build -DskipTests=true -DskipITs clean deploy
 elif [ "$PROJECT" == "orm" ] || [ "$PROJECT" == "nosql" ] || [ "$PROJECT" == "reactive" ] || [ "$PROJECT" == "models" ] || [ "$PROJECT" == "accessor" ]; then
   ./gradlew clean publishAllPublicationsToSnapshotsRepository -x test --no-scan --no-daemon --no-build-cache --stacktrace
 else

@@ -19,7 +19,7 @@ fi
 if [ "$PROJECT" == "tools" ]; then
   ./mvnw deploy -DpublishPlugin=true -DperformRelease=true \
         -Pdocbook,documentation-pdf,dist,perf,relocation,release \
-    		-DskipTests=true -Dcheckstyle.skip=true
+    		-DskipTests=true -DskipITs -Dcheckstyle.skip=true
 fi
 
 popd
